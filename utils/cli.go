@@ -17,6 +17,7 @@ import (
 func ParseArgs() {
 	initCmd := flag.NewFlagSet("init", flag.ExitOnError)
 	hashObjectCmd := flag.NewFlagSet("hash-object", flag.ExitOnError)
+	catFileCmd := flag.NewFlagSet("cat-file", flag.ExitOnError)
 	switch os.Args[1] {
 	case "init":
 		initCmd.Parse(os.Args[2:])
@@ -24,11 +25,11 @@ func ParseArgs() {
 	case "hash-object":
 		hashObjectCmd.Parse(os.Args[2:])
 		remainingArgs := hashObjectCmd.Args()
-		if len(remainingArgs) < 1 {
-			fmt.Println()
-			os.Exit(1)
-		}
 		runHashObject(remainingArgs)
+	case "cat-file":
+		catFileCmd.Parse(os.Args[2:])
+		remainingArgs := catFileCmd.Args()
+		runCatFile(remainingArgs)
 	default:
 		os.Exit(1)
 	}
@@ -57,6 +58,7 @@ func runInit() {
   @Function name    : hash-object
   @Description      : 实现计算一个文件的SHA-1并且存储内容到object目录
   @Params           :
+	-fileName		: 给定文件名字，目标文件
   @Return           : 打印文件的SHA-1值
 1. Get the path of the file to store.
 2. Read the file.
@@ -64,6 +66,10 @@ func runInit() {
 4. Store the file under ".ugit/objects/{the SHA-1 hash}".
 ********************************************************************************/
 func runHashObject(args []string) {
+	if len(args) < 1 {
+		fmt.Println()
+		os.Exit(1)
+	}
 	file, err := os.Open(args[0])
 	if err != nil {
 		log.Fatal(err)
@@ -74,4 +80,25 @@ func runHashObject(args []string) {
 		log.Fatal(err)
 	}
 	fmt.Println(oid)
+}
+
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : cat-file
+  @Description      : 输入给定文件名，查看其信息
+  @Params           :
+  	-fileName		: 给定文件名字，目标文件
+  @Return           : 控制台输出文件内容
+********************************************************************************/
+func runCatFile(args []string) {
+	if len(args) < 1 {
+		fmt.Println()
+		os.Exit(1)
+	}
+	content, err := DoRunCatFile(args[0])
+	if err != nil {
+		log.Fatal(err)
+		os.Exit(1)
+	}
+	fmt.Println(string(content))
 }

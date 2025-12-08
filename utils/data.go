@@ -68,3 +68,14 @@ func DoHashObject(file os.File) (string, error) {
 	}
 	return oid, nil
 }
+
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : DoRunCatFile
+  @Description      : 查看指定哈希值的文件内容信息
+  @Params           :
+  @Return           :
+********************************************************************************/
+func DoRunCatFile(oid string) ([]byte, error) {
+	return os.ReadFile(filepath.Join(GIT_DIR, OBJECTS, oid))
+}
