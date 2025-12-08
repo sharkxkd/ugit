@@ -7,6 +7,8 @@ import (
 	"os"
 )
 
+var type_ string
+
 // prettier-ignore
 /*******************************************************************************
   @Function name    : parseArgs
@@ -17,6 +19,7 @@ import (
 func ParseArgs() {
 	initCmd := flag.NewFlagSet("init", flag.ExitOnError)
 	hashObjectCmd := flag.NewFlagSet("hash-object", flag.ExitOnError)
+	hashObjectCmd.StringVar(&type_, "type", "blob", "文件类型")
 	catFileCmd := flag.NewFlagSet("cat-file", flag.ExitOnError)
 	switch os.Args[1] {
 	case "init":
@@ -70,12 +73,7 @@ func runHashObject(args []string) {
 		fmt.Println()
 		os.Exit(1)
 	}
-	file, err := os.Open(args[0])
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
-	oid, err := DoHashObject(*file)
+	oid, err := DoHashObject(args[0])
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -95,7 +93,7 @@ func runCatFile(args []string) {
 		fmt.Println()
 		os.Exit(1)
 	}
-	content, err := DoRunCatFile(args[0])
+	content, err := DoRunCatFile(args[0], "blob")
 	if err != nil {
 		log.Fatal(err)
 		os.Exit(1)
