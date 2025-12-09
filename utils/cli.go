@@ -1,3 +1,11 @@
+// prettier-ignore
+/*******************************************************************************
+  * FILENAME    : cli.go
+  * Date        : 2025/12/09 11:05:39
+  * Author      : zc
+  * Version     : v1.0.0
+  * Decription  : 实现命令的解析与分发
+********************************************************************************/
 package utils
 
 import (
@@ -21,6 +29,7 @@ func ParseArgs() {
 	hashObjectCmd := flag.NewFlagSet("hash-object", flag.ExitOnError)
 	hashObjectCmd.StringVar(&type_, "type", "blob", "文件类型")
 	catFileCmd := flag.NewFlagSet("cat-file", flag.ExitOnError)
+	writeTreeCmd := flag.NewFlagSet("write-tree", flag.ExitOnError)
 	switch os.Args[1] {
 	case "init":
 		initCmd.Parse(os.Args[2:])
@@ -33,6 +42,10 @@ func ParseArgs() {
 		catFileCmd.Parse(os.Args[2:])
 		remainingArgs := catFileCmd.Args()
 		runCatFile(remainingArgs)
+	case "write-tree":
+		writeTreeCmd.Parse(os.Args[2:])
+		remainingArgs := writeTreeCmd.Args()
+		runWriteTree(remainingArgs)
 	default:
 		os.Exit(1)
 	}
@@ -99,4 +112,19 @@ func runCatFile(args []string) {
 		os.Exit(1)
 	}
 	fmt.Println(string(content))
+}
+
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : write-tree
+  @Description      : 输出指定目录下的所有子文件
+  @Params           : 指定的目录，默认当前命令的目录
+  @Return           : 控制台打印输出的文件路径
+********************************************************************************/
+func runWriteTree(args []string) {
+	err := writeTree("")
+	if err != nil {
+		log.Fatal(err)
+		os.Exit(1)
+	}
 }
