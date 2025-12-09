@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // prettier-ignore
@@ -32,6 +33,10 @@ func writeTree(directory string) error {
 	}
 	for _, file := range files {
 		path := filepath.Join(directory, file.Name())
+		// 忽略自己的子目录
+		if isUgit(path) {
+			continue
+		}
 		if file.IsDir() {
 			if err := writeTree(path); err != nil {
 				return err
@@ -41,4 +46,15 @@ func writeTree(directory string) error {
 		}
 	}
 	return nil
+}
+
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : isUgit
+  @Description      : 判断是否存在.ugit目录
+  @Params           : 完整路径
+  @Return           : 返回是否存在.ugit
+********************************************************************************/
+func isUgit(path string) bool {
+	return strings.Contains(path, ".ugit")
 }
