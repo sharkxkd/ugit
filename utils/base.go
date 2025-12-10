@@ -14,6 +14,11 @@ import (
 	"path/filepath"
 	"strings"
 )
+type dirType struct{
+		name string
+		oid string
+		fType string
+}
 
 // prettier-ignore
 /*******************************************************************************
@@ -22,15 +27,16 @@ import (
   @Params           : 当前目录
   @Return           : 异常
 ********************************************************************************/
-func writeTree(directory string) error {
+func writeTree(directory string) (string, error) {
 	if directory == "" {
 		directory = "."
 	}
 	var files []os.DirEntry
 	var err error
 	if files, err = os.ReadDir(directory); err != nil {
-		return err
+		return "", err
 	}
+	var dirs []dirType
 	for _, file := range files {
 		path := filepath.Join(directory, file.Name())
 		// 忽略自己的子目录
@@ -38,14 +44,32 @@ func writeTree(directory string) error {
 			continue
 		}
 		if file.IsDir() {
-			if err := writeTree(path); err != nil {
-				return err
+			oid, err := writeTree(path)
+			if err != nil {
+				return "",err
 			}
+			dirs = append(dirs, dirType{file.Name(), oid, "tree"})
 		} else {
-			fmt.Println(path)
+			content, err := os.ReadFile(path)
+			if err != nil {
+				return "", err
+			}
+			foid, err := DoHashObject(content, "blob")
+			if err != nil {
+				return "",err;
+			}
+			fmt.Printf("%s: %s\n",foid, path)
 		}
 	}
-	return nil
+	var content string
+	for _, d := range dirs {
+		content += fmt.Sprintf("%s %s %s\n",d.name,d.oid,d.fType)
+	}
+	oid, err := DoHashObject([]byte(content), "tree")
+	if err != nil {
+		return "", err
+	}
+	return oid ,nil
 }
 
 // prettier-ignore
@@ -56,5 +80,5 @@ func writeTree(directory string) error {
   @Return           : 返回是否存在.ugit
 ********************************************************************************/
 func isUgit(path string) bool {
-	return strings.Contains(path, ".ugit")
+	return strings.Contains(path, ".ugit") || strings.Contains(path, ".git")
 }

@@ -86,7 +86,12 @@ func runHashObject(args []string) {
 		fmt.Println()
 		os.Exit(1)
 	}
-	oid, err := DoHashObject(args[0])
+	content, err := os.ReadFile(args[0])
+	if err != nil {
+		log.Fatal(err)
+		os.Exit(1)
+	}
+	oid, err := DoHashObject(content, type_)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -122,9 +127,10 @@ func runCatFile(args []string) {
   @Return           : 控制台打印输出的文件路径
 ********************************************************************************/
 func runWriteTree(args []string) {
-	err := writeTree("")
+	oid, err := writeTree("")
 	if err != nil {
 		log.Fatal(err)
 		os.Exit(1)
 	}
+	fmt.Println(oid)
 }

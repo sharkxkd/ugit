@@ -42,26 +42,22 @@ func DoInit() {
 // prettier-ignore
 /*******************************************************************************
   @Function name    : DoHashObject
-  @Description      : 计算文件的SHA-1值，并写入到对应的数据库文件
+  @Description      : 根据文件内容计算文件的SHA-1值，并写入到对应的数据库文件
   @Params           :
-	-*file			: 文件指针
+	-content		: 文件内容
+	-fileType		: 文件类型
   @Return           :
 	-oid			: SHA-1文件名，对应数据库的键
 	-error			: 异常
 ********************************************************************************/
-func DoHashObject(fileName string) (string, error) {
-	content, err := os.ReadFile(fileName)
-	if err != nil {
-		return "", err
-	}
-
-	obj := []byte(type_)
+func DoHashObject(content []byte, fileType string) (string, error) {
+	obj := []byte(fileType)
 	obj = append(obj, 0)
 	obj = append(obj, content...)
 	hash := sha1.Sum(obj)
 	oid := hex.EncodeToString(hash[:])
 
-	err = os.WriteFile(filepath.Join(GIT_DIR, OBJECTS, oid), obj, 0644)
+	err := os.WriteFile(filepath.Join(GIT_DIR, OBJECTS, oid), obj, 0644)
 	if err != nil {
 		return "", err
 	}
