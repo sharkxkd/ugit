@@ -16,6 +16,7 @@ import (
 )
 
 var type_ string
+var message string
 
 // prettier-ignore
 /*******************************************************************************
@@ -29,8 +30,13 @@ func ParseArgs() {
 	hashObjectCmd := flag.NewFlagSet("hash-object", flag.ExitOnError)
 	hashObjectCmd.StringVar(&type_, "type", "blob", "文件类型")
 	catFileCmd := flag.NewFlagSet("cat-file", flag.ExitOnError)
+	catFileCmd.StringVar(&type_, "t", "blob", "文件类型")
+	catFileCmd.StringVar(&type_, "type", "blob", "文件类型")
 	writeTreeCmd := flag.NewFlagSet("write-tree", flag.ExitOnError)
 	readTreeCmd := flag.NewFlagSet("read-tree", flag.ExitOnError)
+	commitCmd := flag.NewFlagSet("commit", flag.ExitOnError)
+	commitCmd.StringVar(&message, "m", "Default Message Empty", "提交消息")
+	commitCmd.StringVar(&message, "message", "Default Message Empty", "提交消息")
 	switch os.Args[1] {
 	case "init":
 		initCmd.Parse(os.Args[2:])
@@ -51,6 +57,10 @@ func ParseArgs() {
 		readTreeCmd.Parse(os.Args[2:])
 		remainingArgs := readTreeCmd.Args()
 		runReadTree(remainingArgs)
+	case "commit":
+		commitCmd.Parse(os.Args[2:])
+		remainingArgs := commitCmd.Args()
+		runCommit(remainingArgs)
 	default:
 		os.Exit(1)
 	}
@@ -116,7 +126,7 @@ func runCatFile(args []string) {
 		fmt.Println()
 		os.Exit(1)
 	}
-	content, err := DoRunCatFile(args[0], "blob")
+	content, err := DoRunCatFile(args[0], type_)
 	if err != nil {
 		log.Fatal(err)
 		os.Exit(1)
@@ -142,9 +152,9 @@ func runWriteTree(args []string) {
 
 // prettier-ignore
 /*******************************************************************************
-  @Function name    : function
-  @Description      :
-  @Params           :
+  @Function name    : read-tree
+  @Description      : 将指定的OID的tree读入到工作目录
+  @Params           : 命令中输入对应的oid
   @Return           :
 ********************************************************************************/
 func runReadTree(args []string) {
@@ -157,4 +167,20 @@ func runReadTree(args []string) {
 		fmt.Printf("fatal read tree %s", args[0])
 	}
 
+}
+
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : commit
+  @Description      : 提交命令，创建一个提交对象
+  @Params           :
+  @Return           :
+********************************************************************************/
+func runCommit(args []string) {
+	content, err := commit(message)
+	if err != nil {
+		fmt.Printf("fatal commit with error %s", err.Error())
+		os.Exit(1)
+	}
+	fmt.Printf("%s", content)
 }

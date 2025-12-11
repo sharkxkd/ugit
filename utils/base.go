@@ -198,3 +198,27 @@ func emptyCurrentDirectory(basePath string) error {
 	}
 	return err
 }
+
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : commit
+  @Description      : commit底层实现，写对应commit文本，并提交到objects数据库，为"commit"类型
+  @Params           : 提交的消息
+  @Return           :
+	-oid			: commit对象OID
+	-err			: error
+********************************************************************************/
+func commit(message string) (string, error) {
+	oid, err := writeTree("")
+	if err != nil {
+		return "", err
+	}
+	commitMessage := fmt.Sprintf("tree %s\n", oid)
+	commitMessage += fmt.Sprintln()
+	commitMessage += fmt.Sprintln(message)
+	oid, err = DoHashObject([]byte(commitMessage), "commit")
+	if err != nil {
+		return "", err
+	}
+	return oid, nil
+}
