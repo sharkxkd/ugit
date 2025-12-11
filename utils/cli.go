@@ -30,6 +30,7 @@ func ParseArgs() {
 	hashObjectCmd.StringVar(&type_, "type", "blob", "文件类型")
 	catFileCmd := flag.NewFlagSet("cat-file", flag.ExitOnError)
 	writeTreeCmd := flag.NewFlagSet("write-tree", flag.ExitOnError)
+	readTreeCmd := flag.NewFlagSet("read-tree", flag.ExitOnError)
 	switch os.Args[1] {
 	case "init":
 		initCmd.Parse(os.Args[2:])
@@ -46,6 +47,10 @@ func ParseArgs() {
 		writeTreeCmd.Parse(os.Args[2:])
 		remainingArgs := writeTreeCmd.Args()
 		runWriteTree(remainingArgs)
+	case "read-tree":
+		readTreeCmd.Parse(os.Args[2:])
+		remainingArgs := readTreeCmd.Args()
+		runReadTree(remainingArgs)
 	default:
 		os.Exit(1)
 	}
@@ -133,4 +138,23 @@ func runWriteTree(args []string) {
 		os.Exit(1)
 	}
 	fmt.Println(oid)
+}
+
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : function
+  @Description      :
+  @Params           :
+  @Return           :
+********************************************************************************/
+func runReadTree(args []string) {
+	if len(args) < 1 {
+		fmt.Println()
+		os.Exit(1)
+	}
+	if err := readTree(args[0]); err != nil {
+		log.Fatal(err)
+		fmt.Printf("fatal read tree %s", args[0])
+	}
+
 }
