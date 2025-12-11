@@ -44,7 +44,7 @@ func writeTree(directory string) (string, error) {
 	for _, file := range files {
 		path := filepath.Join(directory, file.Name())
 		// 忽略自己的子目录
-		if isUgit(path) {
+		if isIngnored(path) {
 			continue
 		}
 		if file.IsDir() {
@@ -85,7 +85,7 @@ func writeTree(directory string) (string, error) {
   @Params           : 完整路径
   @Return           : 返回是否存在.ugit
 ********************************************************************************/
-func isUgit(path string) bool {
+func isIngnored(path string) bool {
 	return strings.Contains(path, ".ugit") || strings.Contains(path, ".git")
 }
 
@@ -119,9 +119,11 @@ func iterTreeEntries(oid string) <-chan dirType {
 // prettier-ignore
 /*******************************************************************************
   @Function name    : getTree
-  @Description      :
+  @Description      : 获取tree文件内所有的文件和目录，建立path到name的映射关系
   @Params           :
-  @Return           :
+	-oid			: 对应的tree的OID
+	-basePath		: 基础路径
+  @Return           : 映射关系
 ********************************************************************************/
 func getTree(oid string, basePath string) map[string]string {
 	result := make(map[string]string)
@@ -140,12 +142,15 @@ func getTree(oid string, basePath string) map[string]string {
 
 // prettier-ignore
 /*******************************************************************************
-  @Function name    : fucntion
-  @Description      :
-  @Params           :
-  @Return           :
+  @Function name    : readTree
+  @Description      : 根据一个oid，将其对应的所有文件复制到暂存区
+  @Params           : tree_oid
+  @Return           : 错误
 ********************************************************************************/
 func readTree(treeOid string) error {
+	if err := emptyCurrentDirectory("./test"); err != nil {
+		return err
+	}
 	for path, oid := range getTree(treeOid, "./test") {
 		fmt.Printf("path: %s  oid: %s\n", path, oid)
 		if _, err := common.PathExists(filepath.Dir(path)); err != nil {
@@ -162,4 +167,34 @@ func readTree(treeOid string) error {
 		}
 	}
 	return nil
+}
+
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : emptyCurrentDirectory
+  @Description      : 清空暂存区的所有文件
+  @Params           : 输入默认基础路径
+  @Return           : 错误
+********************************************************************************/
+func emptyCurrentDirectory(basePath string) error {
+	if basePath == "" {
+		basePath = "./test"
+	}
+	entries, err := os.ReadDir(basePath)
+	if err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		path := filepath.Join(basePath, entry.Name())
+		if isIngnored(path) {
+			continue
+		}
+		if entry.IsDir() {
+			if err := emptyCurrentDirectory(path); err != nil {
+				return err
+			}
+		}
+		os.Remove(path)
+	}
+	return err
 }
