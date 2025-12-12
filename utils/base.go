@@ -214,11 +214,15 @@ func commit(message string) (string, error) {
 		return "", err
 	}
 	commitMessage := fmt.Sprintf("tree %s\n", oid)
+	if poid := getHead(); poid != "" {
+		commitMessage += fmt.Sprintf("parent %s", getHead())
+	}
 	commitMessage += fmt.Sprintln()
 	commitMessage += fmt.Sprintln(message)
 	oid, err = DoHashObject([]byte(commitMessage), "commit")
 	if err != nil {
 		return "", err
 	}
+	setHead(oid)
 	return oid, nil
 }

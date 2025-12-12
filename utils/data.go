@@ -16,10 +16,12 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 const GIT_DIR = ".ugit"
 const OBJECTS = "objects"
+const HEAD = "HEAD"
 
 // prettier-ignore
 /*******************************************************************************
@@ -89,4 +91,22 @@ func DoRunCatFile(oid string, expected string) ([]byte, error) {
 		return []byte{}, fmt.Errorf("expected type %s but got %s", expected, string(fileType))
 	}
 	return content, nil
+}
+
+func setHead(oid string) {
+	path := filepath.Join(GIT_DIR, HEAD)
+	if err := os.WriteFile(path, []byte(oid), 0644); err != nil {
+		fmt.Println("error with writing HEAD file")
+	}
+}
+
+func getHead() string {
+	path := filepath.Join(GIT_DIR, HEAD)
+	content, err := os.ReadFile(path)
+	if err != nil {
+		fmt.Println("error with Reading HEAD file")
+	}
+	oid := string(content)
+	oid = strings.TrimSpace(oid)
+	return oid
 }
