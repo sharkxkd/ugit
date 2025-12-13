@@ -17,6 +17,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"ugit/common"
 )
 
 const GIT_DIR = ".ugit"
@@ -93,21 +94,33 @@ func DoRunCatFile(oid string, expected string) ([]byte, error) {
 	return content, nil
 }
 
-func setHead(oid string) {
-	path := filepath.Join(GIT_DIR, HEAD)
+func updateRef(ref string, oid string) {
+	path := filepath.Join(GIT_DIR, ref)
+	if _, err := common.PathExists(filepath.Dir(path)); err != nil {
+		log.Fatal(err)
+		fmt.Print(err)
+		os.Exit(1)
+	}
 	if err := os.WriteFile(path, []byte(oid), 0644); err != nil {
-		fmt.Println("error with writing HEAD file")
+		fmt.Printf("error with writing %s file\n", ref)
 	}
 }
 
-func getHead() string {
-	path := filepath.Join(GIT_DIR, HEAD)
+func getRef(ref string) string {
+	path := filepath.Join(GIT_DIR, ref)
+	if fileInfo, err := os.Stat(path); err != nil || fileInfo.IsDir() {
+		if os.IsNotExist(err){
+			return ""
+		}
+		fmt.Printf("error with opening %s file\n", ref)
+		return ""
+	}
 	content, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return ""
 		}
-		fmt.Println("error with Reading HEAD file")
+		fmt.Printf("error with opening %s file\n", ref)
 	}
 	oid := string(content)
 	oid = strings.TrimSpace(oid)

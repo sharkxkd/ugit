@@ -220,8 +220,8 @@ func commit(message string) (string, error) {
 		return "", err
 	}
 	commitMessage := fmt.Sprintf("tree %s\n", oid)
-	if poid := getHead(); poid != "" {
-		commitMessage += fmt.Sprintf("parent %s\n", getHead())
+	if poid := getRef(HEAD); poid != "" {
+		commitMessage += fmt.Sprintf("parent %s\n", poid)
 	}
 	commitMessage += fmt.Sprintln()
 	commitMessage += fmt.Sprintln(message)
@@ -229,7 +229,7 @@ func commit(message string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	setHead(oid)
+	updateRef(HEAD, oid)
 	return oid, nil
 }
 
@@ -282,6 +282,31 @@ func checkout(oid string) error {
 		return err
 	}
 	readTree(commit.tree)
-	setHead(oid)
+	updateRef(HEAD, oid)
 	return nil
+}
+
+func createTag(name string, oid string) {
+	ref := fmt.Sprintf("refs/tags/%s", name)
+	updateRef(ref, oid)
+}
+
+func getOid(name string) string {
+	refsToTry := []string{
+		fmt.Sprint(name),
+		fmt.Sprintf("refs/%s", name),
+		fmt.Sprintf("refs/tags/%s", name),
+		fmt.Sprintf("refs/head/%s", name),
+	}
+	for _, ref := range refsToTry {
+		if res := getRef(ref); res != "" {
+			return res
+		}
+	}
+	if common.IsSHA1(name) {
+		return name
+	}
+	fmt.Printf("Either a tag name or a oid of %s\n", name)
+	os.Exit(1)
+	return ""
 }

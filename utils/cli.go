@@ -18,6 +18,7 @@ import (
 
 var type_ string
 var message string
+var tagName string
 
 // prettier-ignore
 /*******************************************************************************
@@ -48,6 +49,8 @@ func ParseArgs() {
 
 	checkoutCmd := flag.NewFlagSet("checkout", flag.ExitOnError)
 
+	tagCmd := flag.NewFlagSet("tag", flag.ExitOnError)
+	tagCmd.StringVar(&tagName, "name", "Default_Name", "标签名称")
 	switch os.Args[1] {
 	case "init":
 		initCmd.Parse(os.Args[2:])
@@ -80,6 +83,10 @@ func ParseArgs() {
 		checkoutCmd.Parse(os.Args[2:])
 		remainingArgs := checkoutCmd.Args()
 		runCheckout(remainingArgs)
+	case "tag":
+		tagCmd.Parse(os.Args[2:])
+		remainingArgs := tagCmd.Args()
+		runTag(remainingArgs)
 	default:
 		os.Exit(1)
 	}
@@ -145,7 +152,8 @@ func runCatFile(args []string) {
 		fmt.Println()
 		os.Exit(1)
 	}
-	content, err := DoRunCatFile(args[0], type_)
+	treeOid := getOid(args[0])
+	content, err := DoRunCatFile(treeOid, type_)
 	if err != nil {
 		log.Fatal(err)
 		os.Exit(1)
@@ -181,6 +189,7 @@ func runReadTree(args []string) {
 		fmt.Println()
 		os.Exit(1)
 	}
+	args[0] = getOid(args[0])
 	if err := readTree(args[0]); err != nil {
 		log.Fatal(err)
 		fmt.Printf("fatal read tree %s", args[0])
@@ -214,9 +223,9 @@ func runCommit(args []string) {
 func runLog(args []string) {
 	var oid string
 	if len(args) == 1 {
-		oid = args[0]
+		oid = getOid(args[0])
 	} else {
-		oid = getHead()
+		oid = getRef(HEAD)
 	}
 	for oid != "" {
 		commit, err := getCommit(oid)
@@ -244,7 +253,18 @@ func runCheckout(args []string) {
 		fmt.Println("error checkout without an oid")
 		os.Exit(1)
 	}
+	args[0] = getOid(args[0])
 	if err := checkout(args[0]); err != nil {
 		fmt.Printf("Error happened while checkout with %s, description %s", args[0], err)
 	}
+}
+
+func runTag(args []string) {
+	var oid string
+	if len(args) == 1 {
+		oid = getOid(args[0])
+	} else {
+		oid = getRef(HEAD)
+	}
+	createTag(tagName, oid)
 }

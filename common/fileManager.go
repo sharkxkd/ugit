@@ -15,7 +15,7 @@ import "os"
   @Function name    : PathExists
   @Description      : 判断路径是否存在，不存在则创建
   @Params           : 文件路径
-  @Return           : 
+  @Return           :
 ********************************************************************************/
 func PathExists(path string) (bool, error) {
 	_, err := os.Stat(path)
@@ -30,4 +30,33 @@ func PathExists(path string) (bool, error) {
 		return true, nil
 	}
 	return false, err // 其他错误
+}
+
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : IsSHA1
+  @Description      : IsSHA1 判断字符串是否为合法的 SHA1 哈希
+  @Params           : 字符串s
+  @Return           : 是否为SHA1
+********************************************************************************/
+// IsSHA1 判断字符串是否为合法的 SHA1 哈希
+func IsSHA1(s string) bool {
+	// 1. 长度必须是 40
+	if len(s) != 40 {
+		return false
+	}
+
+	// 2. 遍历检查每个字符是否为十六进制 (0-9, a-f, A-F)
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		isHex := (c >= '0' && c <= '9') ||
+			(c >= 'a' && c <= 'f') ||
+			(c >= 'A' && c <= 'F')
+
+		if !isHex {
+			return false
+		}
+	}
+
+	return true
 }
