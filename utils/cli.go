@@ -221,12 +221,10 @@ func runCommit(args []string) {
   @Return           :
 ********************************************************************************/
 func runLog(args []string) {
-	var oid string
-	if len(args) == 1 {
-		oid = getOid(args[0])
-	} else {
-		oid = getRef(HEAD)
+	if len(args) < 1 {
+		args = append(args, "@")
 	}
+	oid := getOid(args[0])
 	for oid != "" {
 		commit, err := getCommit(oid)
 		if err != nil {
@@ -259,12 +257,17 @@ func runCheckout(args []string) {
 	}
 }
 
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : tag
+  @Description      : 为oid取名字
+  @Params           :
+  @Return           :
+********************************************************************************/
 func runTag(args []string) {
-	var oid string
-	if len(args) == 1 {
-		oid = getOid(args[0])
-	} else {
-		oid = getRef(HEAD)
+	if len(args) < 1 {
+		args = append(args, "@")
 	}
+	oid := getOid(args[0])
 	createTag(tagName, oid)
 }

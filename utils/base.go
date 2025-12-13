@@ -292,6 +292,9 @@ func createTag(name string, oid string) {
 }
 
 func getOid(name string) string {
+	if name == "@" {
+		return HEAD
+	}
 	refsToTry := []string{
 		fmt.Sprint(name),
 		fmt.Sprintf("refs/%s", name),
