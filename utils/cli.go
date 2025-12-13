@@ -204,7 +204,12 @@ func runCommit(args []string) {
   @Return           :
 ********************************************************************************/
 func runLog(args []string) {
-	oid := getHead()
+	var oid string
+	if len(args) == 1 {
+		oid = args[0]
+	} else {
+		oid = getHead()
+	}
 	for oid != "" {
 		commit, err := getCommit(oid)
 		if err != nil {
