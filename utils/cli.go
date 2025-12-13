@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 )
 
 var type_ string
@@ -44,6 +45,9 @@ func ParseArgs() {
 	commitCmd.StringVar(&message, "message", "Default Message Empty", "提交消息")
 
 	logCmd := flag.NewFlagSet("log", flag.ExitOnError)
+
+	checkoutCmd := flag.NewFlagSet("checkout", flag.ExitOnError)
+
 	switch os.Args[1] {
 	case "init":
 		initCmd.Parse(os.Args[2:])
@@ -72,6 +76,10 @@ func ParseArgs() {
 		logCmd.Parse(os.Args[2:])
 		remainingArgs := logCmd.Args()
 		runLog(remainingArgs)
+	case "checkout":
+		checkoutCmd.Parse(os.Args[2:])
+		remainingArgs := checkoutCmd.Args()
+		runCheckout(remainingArgs)
 	default:
 		os.Exit(1)
 	}
@@ -218,9 +226,25 @@ func runLog(args []string) {
 
 		fmt.Printf("commit %s\n", oid)
 		commit.message = "    " + commit.message
-		fmt.Println(commit.message)
-		// fmt.Println(strings.ReplaceAll(commit.message, "\n", "\n    "))
+		fmt.Println(strings.ReplaceAll(commit.message, "\n", "\n    "))
 
 		oid = commit.parent
+	}
+}
+
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : function
+  @Description      :
+  @Params           :
+  @Return           :
+********************************************************************************/
+func runCheckout(args []string) {
+	if len(args) < 1 {
+		fmt.Println("error checkout without an oid")
+		os.Exit(1)
+	}
+	if err := checkout(args[0]); err != nil {
+		fmt.Printf("Error happened while checkout with %s, description %s", args[0], err)
 	}
 }

@@ -268,3 +268,20 @@ func getCommit(oid string) (Commit, error) {
 	}
 	return commit, nil
 }
+
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : checkout
+  @Description      : 所携带的oid都需要是commit类型的oid，只能在提交之间切换
+  @Params           : commit oid
+  @Return           : error
+********************************************************************************/
+func checkout(oid string) error {
+	commit, err := getCommit(oid)
+	if err != nil {
+		return err
+	}
+	readTree(commit.tree)
+	setHead(oid)
+	return nil
+}
