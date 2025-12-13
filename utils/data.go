@@ -13,6 +13,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
@@ -23,6 +24,12 @@ import (
 const GIT_DIR = ".ugit"
 const OBJECTS = "objects"
 const HEAD = "HEAD"
+const REFS = ".ugit/refs"
+
+type refMap struct {
+	refname string
+	oid     string
+}
 
 // prettier-ignore
 /*******************************************************************************
@@ -109,7 +116,7 @@ func updateRef(ref string, oid string) {
 func getRef(ref string) string {
 	path := filepath.Join(GIT_DIR, ref)
 	if fileInfo, err := os.Stat(path); err != nil || fileInfo.IsDir() {
-		if os.IsNotExist(err){
+		if os.IsNotExist(err) {
 			return ""
 		}
 		fmt.Printf("error with opening %s file\n", ref)
@@ -125,4 +132,38 @@ func getRef(ref string) string {
 	oid := string(content)
 	oid = strings.TrimSpace(oid)
 	return oid
+}
+
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : function
+  @Description      :
+  @Params           :
+  @Return           :
+********************************************************************************/
+func iterRefs() <-chan refMap {
+	ch := make(chan refMap)
+	go func() {
+		defer close(ch)
+
+		// 先处理 HEAD
+		ch <- refMap{refname: HEAD, oid: getRef(HEAD)}
+
+		// 遍历 refs 下的所有引用文件
+		_ = filepath.WalkDir(REFS, func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return nil
+			}
+			if d.IsDir() {
+				return nil
+			}
+			rel, err := filepath.Rel(GIT_DIR, path)
+			if err != nil {
+				rel = path
+			}
+			ch <- refMap{refname: rel, oid: getRef(rel)}
+			return nil
+		})
+	}()
+	return ch
 }

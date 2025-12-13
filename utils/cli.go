@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"strings"
 )
 
@@ -51,6 +52,8 @@ func ParseArgs() {
 
 	tagCmd := flag.NewFlagSet("tag", flag.ExitOnError)
 	tagCmd.StringVar(&tagName, "name", "Default_Name", "标签名称")
+
+	kCmd := flag.NewFlagSet("k", flag.ExitOnError)
 	switch os.Args[1] {
 	case "init":
 		initCmd.Parse(os.Args[2:])
@@ -87,6 +90,10 @@ func ParseArgs() {
 		tagCmd.Parse(os.Args[2:])
 		remainingArgs := tagCmd.Args()
 		runTag(remainingArgs)
+	case "k":
+		kCmd.Parse(os.Args[2:])
+		remainingArgs := kCmd.Args()
+		runK(remainingArgs)
 	default:
 		os.Exit(1)
 	}
@@ -270,4 +277,48 @@ func runTag(args []string) {
 	}
 	oid := getOid(args[0])
 	createTag(tagName, oid)
+}
+
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : function
+  @Description      :
+  @Params           :
+  @Return           :
+********************************************************************************/
+func runK(args []string) {
+	dot := "digraph commits {\n"
+
+	oids := []string{}
+	for ref := range iterRefs() {
+		dot += fmt.Sprintf("\"%s\" [shape=note]\n", ref.refname)
+		dot += fmt.Sprintf("\"%s\" -> \"%s\"", ref.refname, ref.oid)
+		oids = append(oids, ref.oid)
+	}
+	for oid := range iterCommitsAndParents(oids) {
+		commit, err := getCommit(oid)
+		if err != nil {
+			fmt.Println("error with drawing graph")
+			os.Exit(1)
+		}
+		dot += fmt.Sprintf("\"%s\" [shape=box style=filled label=\"%s\"]", oid, oid[:10])
+		if commit.parent != "" {
+			dot += fmt.Sprintf("\"%s\" -> \"%s\"", oid, commit.parent)
+		}
+	}
+	dot += "}"
+	fmt.Print(dot)
+	cmd := exec.Command("dot", "-Tx11", "/dev/stdin")
+	cmd.Stdin = strings.NewReader(dot)
+	// 建议把标准错误重定向出来，如果 dot 报错（比如没有安装 GTK 插件），你能看到
+	cmd.Stderr = os.Stderr
+
+	// 启动命令并等待结束
+	// 这相当于 Python 的 with ... as proc 以及 communicate 的组合效果
+	fmt.Println("Opening visualization window...")
+	err := cmd.Run()
+
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+	}
 }

@@ -313,3 +313,29 @@ func getOid(name string) string {
 	os.Exit(1)
 	return ""
 }
+
+func iterCommitsAndParents(oids []string) <-chan string {
+	ch := make(chan string)
+	stack := append([]string{}, oids...)
+	visited := make(map[string]struct{})
+	go func() {
+		defer close(ch)
+		for len(stack) > 0 {
+			index := len(stack) - 1
+			oid := stack[index]
+			stack = stack[:index]
+
+			if _, exists := visited[oid]; exists || oid == "" {
+				continue
+			}
+			visited[oid] = struct{}{}
+			ch <- oid
+			commit, err := getCommit(oid)
+			if err != nil {
+				fmt.Println("error with itering commits and parents")
+			}
+			stack = append(stack, commit.parent)
+		}
+	}()
+	return ch
+}
