@@ -104,6 +104,9 @@ func getHead() string {
 	path := filepath.Join(GIT_DIR, HEAD)
 	content, err := os.ReadFile(path)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return ""
+		}
 		fmt.Println("error with Reading HEAD file")
 	}
 	oid := string(content)

@@ -24,6 +24,12 @@ type dirType struct {
 	fType string
 }
 
+type Commit struct {
+	tree    string
+	parent  string
+	message string
+}
+
 // prettier-ignore
 /*******************************************************************************
   @Function name    : writeTree
@@ -215,7 +221,7 @@ func commit(message string) (string, error) {
 	}
 	commitMessage := fmt.Sprintf("tree %s\n", oid)
 	if poid := getHead(); poid != "" {
-		commitMessage += fmt.Sprintf("parent %s", getHead())
+		commitMessage += fmt.Sprintf("parent %s\n", getHead())
 	}
 	commitMessage += fmt.Sprintln()
 	commitMessage += fmt.Sprintln(message)
@@ -225,4 +231,40 @@ func commit(message string) (string, error) {
 	}
 	setHead(oid)
 	return oid, nil
+}
+
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : function
+  @Description      :
+  @Params           :
+  @Return           :
+********************************************************************************/
+func getCommit(oid string) (Commit, error) {
+	byteOfContent, err := DoRunCatFile(oid, "commit")
+	if err != nil {
+		return Commit{}, err
+	}
+	content := string(byteOfContent)
+	var commit Commit
+	var contents = strings.Split(content, "\n")
+	var startIndex = len(contents)
+	for i, line := range contents {
+		if line == "" {
+			startIndex = i + 1
+			break
+		}
+		values := strings.Split(line, " ")
+		if values[0] == "tree" {
+			commit.tree = values[1]
+		} else if values[0] == "parent" {
+			commit.parent = values[1]
+		} else {
+			fmt.Printf("Unknown Field %s\n", values[0])
+		}
+	}
+	if startIndex < len(contents) {
+		commit.message = strings.Join(contents[startIndex:], "")
+	}
+	return commit, nil
 }

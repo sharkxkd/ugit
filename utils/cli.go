@@ -27,16 +27,23 @@ var message string
 ********************************************************************************/
 func ParseArgs() {
 	initCmd := flag.NewFlagSet("init", flag.ExitOnError)
+
 	hashObjectCmd := flag.NewFlagSet("hash-object", flag.ExitOnError)
 	hashObjectCmd.StringVar(&type_, "type", "blob", "文件类型")
+
 	catFileCmd := flag.NewFlagSet("cat-file", flag.ExitOnError)
 	catFileCmd.StringVar(&type_, "t", "blob", "文件类型")
 	catFileCmd.StringVar(&type_, "type", "blob", "文件类型")
+
 	writeTreeCmd := flag.NewFlagSet("write-tree", flag.ExitOnError)
+
 	readTreeCmd := flag.NewFlagSet("read-tree", flag.ExitOnError)
+
 	commitCmd := flag.NewFlagSet("commit", flag.ExitOnError)
 	commitCmd.StringVar(&message, "m", "Default Message Empty", "提交消息")
 	commitCmd.StringVar(&message, "message", "Default Message Empty", "提交消息")
+
+	logCmd := flag.NewFlagSet("log", flag.ExitOnError)
 	switch os.Args[1] {
 	case "init":
 		initCmd.Parse(os.Args[2:])
@@ -61,6 +68,10 @@ func ParseArgs() {
 		commitCmd.Parse(os.Args[2:])
 		remainingArgs := commitCmd.Args()
 		runCommit(remainingArgs)
+	case "log":
+		logCmd.Parse(os.Args[2:])
+		remainingArgs := logCmd.Args()
+		runLog(remainingArgs)
 	default:
 		os.Exit(1)
 	}
@@ -183,4 +194,28 @@ func runCommit(args []string) {
 		os.Exit(1)
 	}
 	fmt.Printf("%s", content)
+}
+
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : funtion
+  @Description      :
+  @Params           :
+  @Return           :
+********************************************************************************/
+func runLog(args []string) {
+	oid := getHead()
+	for oid != "" {
+		commit, err := getCommit(oid)
+		if err != nil {
+			fmt.Printf("fatal print log with error %s", err.Error())
+		}
+
+		fmt.Printf("commit %s\n", oid)
+		commit.message = "    " + commit.message
+		fmt.Println(commit.message)
+		// fmt.Println(strings.ReplaceAll(commit.message, "\n", "\n    "))
+
+		oid = commit.parent
+	}
 }
