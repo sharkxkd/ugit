@@ -105,6 +105,7 @@ func updateRef(ref string, value RefValue) {
 	if value.symbolic {
 		return
 	}
+	ref, _ = getRefInternal(ref)
 	oid := value.value
 	path := filepath.Join(GIT_DIR, ref)
 	if _, err := common.PathExists(filepath.Dir(path)); err != nil {
@@ -125,28 +126,8 @@ func updateRef(ref string, value RefValue) {
   @Return           :
 ********************************************************************************/
 func getRef(ref string) RefValue {
-	path := filepath.Join(GIT_DIR, ref)
-	if fileInfo, err := os.Stat(path); err != nil || fileInfo.IsDir() {
-		if os.IsNotExist(err) {
-			return RefValue{symbolic: false, value: ""}
-		}
-		fmt.Printf("error with opening %s file\n", ref)
-		return RefValue{symbolic: false, value: ""}
-	}
-	content, err := os.ReadFile(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return RefValue{symbolic: false, value: ""}
-		}
-		fmt.Printf("error with opening %s file\n", ref)
-	}
-	oid := string(content)
-	oid = strings.TrimSpace(oid)
-	if oid != "" && strings.Contains(oid, "ref:") {
-		oid = strings.TrimSpace(strings.Split(oid, ":")[1])
-		oid = getRef(oid).value
-	}
-	return RefValue{symbolic: false, value: oid}
+	_, value := getRefInternal(ref)
+	return value
 }
 
 // prettier-ignore
@@ -181,4 +162,30 @@ func iterRefs() <-chan refMap {
 		})
 	}()
 	return ch
+}
+
+func getRefInternal(ref string) (string, RefValue) {
+	path := filepath.Join(GIT_DIR, ref)
+	if fileInfo, err := os.Stat(path); err != nil || fileInfo.IsDir() {
+		if os.IsNotExist(err) {
+			return "", RefValue{symbolic: false, value: ""}
+		}
+		fmt.Printf("error with opening %s file\n", ref)
+		return "", RefValue{symbolic: false, value: ""}
+	}
+	content, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", RefValue{symbolic: false, value: ""}
+		}
+		fmt.Printf("error with opening %s file\n", ref)
+	}
+	value := string(content)
+	value = strings.TrimSpace(value)
+	isSymbolic := value != "" && strings.Contains(value, "ref:")
+	if isSymbolic {
+		value = strings.TrimSpace(strings.Split(value, ":")[1])
+		return getRefInternal(value)
+	}
+	return ref, RefValue{symbolic: false, value: value}
 }
