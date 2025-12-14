@@ -304,7 +304,9 @@ func runK(args []string) {
 	for ref := range iterRefs(false) {
 		dot += fmt.Sprintf("\"%s\" [shape=note]\n", ref.refname)
 		dot += fmt.Sprintf("\"%s\" -> \"%s\"", ref.refname, ref.ref.value)
-		oids = append(oids, ref.ref.value)
+		if !ref.ref.symbolic {
+			oids = append(oids, ref.ref.value)
+		}
 	}
 	for oid := range iterCommitsAndParents(oids) {
 		commit, err := getCommit(oid)
