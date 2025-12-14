@@ -113,6 +113,13 @@ func updateRef(ref string, oid string) {
 	}
 }
 
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : getRef
+  @Description      : 解析ref文件, 如果包含有ref: 需要递归解析
+  @Params           :
+  @Return           :
+********************************************************************************/
 func getRef(ref string) string {
 	path := filepath.Join(GIT_DIR, ref)
 	if fileInfo, err := os.Stat(path); err != nil || fileInfo.IsDir() {
@@ -131,6 +138,10 @@ func getRef(ref string) string {
 	}
 	oid := string(content)
 	oid = strings.TrimSpace(oid)
+	if oid != "" && strings.Contains(oid, "ref:") {
+		oid = strings.TrimSpace(strings.Split(oid, ":")[1])
+		oid = getRef(oid)
+	}
 	return oid
 }
 
