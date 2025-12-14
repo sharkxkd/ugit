@@ -232,7 +232,7 @@ func runLog(args []string) {
 		args = append(args, "@")
 	}
 	oid := getOid(args[0])
-	for oid != "" {
+	for oid := range iterCommitsAndParents([]string{oid}) {
 		commit, err := getCommit(oid)
 		if err != nil {
 			fmt.Printf("fatal print log with error %s", err.Error())
@@ -241,8 +241,6 @@ func runLog(args []string) {
 		fmt.Printf("commit %s\n", oid)
 		commit.message = "    " + commit.message
 		fmt.Println(strings.ReplaceAll(commit.message, "\n", "\n    "))
-
-		oid = commit.parent
 	}
 }
 
@@ -308,6 +306,7 @@ func runK(args []string) {
 	}
 	dot += "}"
 	fmt.Print(dot)
+	// 子进程实现dot绘制图像
 	cmd := exec.Command("dot", "-Tx11", "/dev/stdin")
 	cmd.Stdin = strings.NewReader(dot)
 	// 建议把标准错误重定向出来，如果 dot 报错（比如没有安装 GTK 插件），你能看到
