@@ -101,11 +101,11 @@ func DoRunCatFile(oid string, expected string) ([]byte, error) {
 	return content, nil
 }
 
-func updateRef(ref string, value RefValue) {
+func updateRef(ref string, value RefValue, deref bool) {
 	if value.symbolic {
 		return
 	}
-	ref, _ = getRefInternal(ref)
+	ref, _ = getRefInternal(ref, deref)
 	oid := value.value
 	path := filepath.Join(GIT_DIR, ref)
 	if _, err := common.PathExists(filepath.Dir(path)); err != nil {
@@ -125,8 +125,8 @@ func updateRef(ref string, value RefValue) {
   @Params           :
   @Return           :
 ********************************************************************************/
-func getRef(ref string) RefValue {
-	_, value := getRefInternal(ref)
+func getRef(ref string, deref bool) RefValue {
+	_, value := getRefInternal(ref, deref)
 	return value
 }
 
@@ -137,13 +137,14 @@ func getRef(ref string) RefValue {
   @Params           :
   @Return           :
 ********************************************************************************/
-func iterRefs() <-chan refMap {
+func iterRefs(deref bool) <-chan refMap {
+
 	ch := make(chan refMap)
 	go func() {
 		defer close(ch)
 
 		// 先处理 HEAD
-		ch <- refMap{refname: HEAD, ref: getRef(HEAD)}
+		ch <- refMap{refname: HEAD, ref: getRef(HEAD, false)}
 
 		// 遍历 refs 下的所有引用文件
 		_ = filepath.WalkDir(REFS, func(path string, d fs.DirEntry, err error) error {
@@ -157,14 +158,14 @@ func iterRefs() <-chan refMap {
 			if err != nil {
 				rel = path
 			}
-			ch <- refMap{refname: rel, ref: getRef(rel)}
+			ch <- refMap{refname: rel, ref: getRef(rel, deref)}
 			return nil
 		})
 	}()
 	return ch
 }
 
-func getRefInternal(ref string) (string, RefValue) {
+func getRefInternal(ref string, deref bool) (string, RefValue) {
 	path := filepath.Join(GIT_DIR, ref)
 	if fileInfo, err := os.Stat(path); err != nil || fileInfo.IsDir() {
 		if os.IsNotExist(err) {
@@ -185,7 +186,9 @@ func getRefInternal(ref string) (string, RefValue) {
 	isSymbolic := value != "" && strings.Contains(value, "ref:")
 	if isSymbolic {
 		value = strings.TrimSpace(strings.Split(value, ":")[1])
-		return getRefInternal(value)
+		if deref {
+			return getRefInternal(value, deref)
+		}
 	}
-	return ref, RefValue{symbolic: false, value: value}
+	return ref, RefValue{symbolic: isSymbolic, value: value}
 }
