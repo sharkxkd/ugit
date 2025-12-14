@@ -220,7 +220,7 @@ func commit(message string) (string, error) {
 		return "", err
 	}
 	commitMessage := fmt.Sprintf("tree %s\n", oid)
-	if poid := getRef(HEAD); poid != "" {
+	if poid := getRef(HEAD).value; poid != "" {
 		commitMessage += fmt.Sprintf("parent %s\n", poid)
 	}
 	commitMessage += fmt.Sprintln()
@@ -229,7 +229,7 @@ func commit(message string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	updateRef(HEAD, oid)
+	updateRef(HEAD, RefValue{symbolic: false, value: oid})
 	return oid, nil
 }
 
@@ -282,7 +282,7 @@ func checkout(oid string) error {
 		return err
 	}
 	readTree(commit.tree)
-	updateRef(HEAD, oid)
+	updateRef(HEAD, RefValue{symbolic: false, value: oid})
 	return nil
 }
 
@@ -295,7 +295,7 @@ func checkout(oid string) error {
 ********************************************************************************/
 func createTag(name string, oid string) {
 	ref := fmt.Sprintf("refs/tags/%s", name)
-	updateRef(ref, oid)
+	updateRef(ref, RefValue{symbolic: false, value: oid})
 }
 
 // prettier-ignore
@@ -316,7 +316,7 @@ func getOid(name string) string {
 		fmt.Sprintf("refs/head/%s", name),
 	}
 	for _, ref := range refsToTry {
-		if res := getRef(ref); res != "" {
+		if res := getRef(ref).value; res != "" {
 			return res
 		}
 	}
@@ -363,11 +363,11 @@ func iterCommitsAndParents(oids []string) <-chan string {
 
 // prettier-ignore
 /*******************************************************************************
-  @Function name    : 分支名称
-  @Description      :
+  @Function name    : createBranch
+  @Description      : 创建分支，创建引用指向oid
   @Params           :
   @Return           :
 ********************************************************************************/
 func createBranch(oid string, name string) {
-	updateRef(fmt.Sprintf("refs/heads/%s", name), oid)
+	updateRef(fmt.Sprintf("refs/heads/%s", name), RefValue{symbolic: false, value: oid})
 }

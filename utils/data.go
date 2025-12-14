@@ -28,7 +28,7 @@ const REFS = ".ugit/refs"
 
 type refMap struct {
 	refname string
-	oid     string
+	ref     RefValue
 }
 
 // prettier-ignore
@@ -101,7 +101,11 @@ func DoRunCatFile(oid string, expected string) ([]byte, error) {
 	return content, nil
 }
 
-func updateRef(ref string, oid string) {
+func updateRef(ref string, value RefValue) {
+	if value.symbolic {
+		return
+	}
+	oid := value.value
 	path := filepath.Join(GIT_DIR, ref)
 	if _, err := common.PathExists(filepath.Dir(path)); err != nil {
 		log.Fatal(err)
@@ -120,19 +124,19 @@ func updateRef(ref string, oid string) {
   @Params           :
   @Return           :
 ********************************************************************************/
-func getRef(ref string) string {
+func getRef(ref string) RefValue {
 	path := filepath.Join(GIT_DIR, ref)
 	if fileInfo, err := os.Stat(path); err != nil || fileInfo.IsDir() {
 		if os.IsNotExist(err) {
-			return ""
+			return RefValue{symbolic: false, value: ""}
 		}
 		fmt.Printf("error with opening %s file\n", ref)
-		return ""
+		return RefValue{symbolic: false, value: ""}
 	}
 	content, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return ""
+			return RefValue{symbolic: false, value: ""}
 		}
 		fmt.Printf("error with opening %s file\n", ref)
 	}
@@ -140,9 +144,9 @@ func getRef(ref string) string {
 	oid = strings.TrimSpace(oid)
 	if oid != "" && strings.Contains(oid, "ref:") {
 		oid = strings.TrimSpace(strings.Split(oid, ":")[1])
-		oid = getRef(oid)
+		oid = getRef(oid).value
 	}
-	return oid
+	return RefValue{symbolic: false, value: oid}
 }
 
 // prettier-ignore
@@ -158,7 +162,7 @@ func iterRefs() <-chan refMap {
 		defer close(ch)
 
 		// 先处理 HEAD
-		ch <- refMap{refname: HEAD, oid: getRef(HEAD)}
+		ch <- refMap{refname: HEAD, ref: getRef(HEAD)}
 
 		// 遍历 refs 下的所有引用文件
 		_ = filepath.WalkDir(REFS, func(path string, d fs.DirEntry, err error) error {
@@ -172,7 +176,7 @@ func iterRefs() <-chan refMap {
 			if err != nil {
 				rel = path
 			}
-			ch <- refMap{refname: rel, oid: getRef(rel)}
+			ch <- refMap{refname: rel, ref: getRef(rel)}
 			return nil
 		})
 	}()

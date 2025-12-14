@@ -22,6 +22,11 @@ var message string
 var tagName string
 var branchName string
 
+type RefValue struct {
+	symbolic bool
+	value    string
+}
+
 // prettier-ignore
 /*******************************************************************************
   @Function name    : parseArgs
@@ -298,8 +303,8 @@ func runK(args []string) {
 	oids := []string{}
 	for ref := range iterRefs() {
 		dot += fmt.Sprintf("\"%s\" [shape=note]\n", ref.refname)
-		dot += fmt.Sprintf("\"%s\" -> \"%s\"", ref.refname, ref.oid)
-		oids = append(oids, ref.oid)
+		dot += fmt.Sprintf("\"%s\" -> \"%s\"", ref.refname, ref.ref.value)
+		oids = append(oids, ref.ref.value)
 	}
 	for oid := range iterCommitsAndParents(oids) {
 		commit, err := getCommit(oid)
