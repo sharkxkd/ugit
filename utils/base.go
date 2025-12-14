@@ -286,11 +286,25 @@ func checkout(oid string) error {
 	return nil
 }
 
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : createTag
+  @Description      : 创建tag映射oid
+  @Params           :
+  @Return           :
+********************************************************************************/
 func createTag(name string, oid string) {
 	ref := fmt.Sprintf("refs/tags/%s", name)
 	updateRef(ref, oid)
 }
 
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : getOid
+  @Description      : 遍历寻找对应的tag、head、branch或是oid
+  @Params           :
+  @Return           :
+********************************************************************************/
 func getOid(name string) string {
 	if name == "@" {
 		name = HEAD
@@ -314,6 +328,13 @@ func getOid(name string) string {
 	return ""
 }
 
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : iterCommitsAndParents
+  @Description      : 根据oids寻找其提交信息及其父提交
+  @Params           :
+  @Return           :
+********************************************************************************/
 func iterCommitsAndParents(oids []string) <-chan string {
 	ch := make(chan string)
 	stack := append([]string{}, oids...)
@@ -338,4 +359,15 @@ func iterCommitsAndParents(oids []string) <-chan string {
 		}
 	}()
 	return ch
+}
+
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : 分支名称
+  @Description      :
+  @Params           :
+  @Return           :
+********************************************************************************/
+func createBranch(oid string, name string) {
+	updateRef(fmt.Sprintf("refs/heads/%s", name), oid)
 }

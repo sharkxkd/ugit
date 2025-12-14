@@ -20,6 +20,7 @@ import (
 var type_ string
 var message string
 var tagName string
+var branchName string
 
 // prettier-ignore
 /*******************************************************************************
@@ -54,6 +55,9 @@ func ParseArgs() {
 	tagCmd.StringVar(&tagName, "name", "Default_Name", "标签名称")
 
 	kCmd := flag.NewFlagSet("k", flag.ExitOnError)
+
+	branchCmd := flag.NewFlagSet("branch", flag.ExitOnError)
+	branchCmd.StringVar(&branchName, "name", "Default Branch Name", "分支名称")
 	switch os.Args[1] {
 	case "init":
 		initCmd.Parse(os.Args[2:])
@@ -94,6 +98,10 @@ func ParseArgs() {
 		kCmd.Parse(os.Args[2:])
 		remainingArgs := kCmd.Args()
 		runK(remainingArgs)
+	case "branch":
+		branchCmd.Parse(os.Args[2:])
+		remainingArgs := branchCmd.Args()
+		runBranch(remainingArgs)
 	default:
 		os.Exit(1)
 	}
@@ -320,4 +328,20 @@ func runK(args []string) {
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 	}
+}
+
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : branch
+  @Description      : branch替代tags，与之不同的是branch是动态的，而tags是静态的
+  @Params           :
+  @Return           :
+********************************************************************************/
+func runBranch(args []string) {
+	if len(args) < 1 {
+		args = append(args, "@")
+	}
+	oid := getOid(args[0])
+	createBranch(oid, branchName)
+	fmt.Printf("Branch %s created at %s", branchName, oid[:10])
 }
