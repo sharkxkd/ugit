@@ -235,8 +235,8 @@ func commit(message string) (string, error) {
 
 // prettier-ignore
 /*******************************************************************************
-  @Function name    : function
-  @Description      :
+  @Function name    : getCommit
+  @Description      : 获取提交ID对应的提交信息
   @Params           :
   @Return           :
 ********************************************************************************/

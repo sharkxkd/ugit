@@ -101,6 +101,13 @@ func DoRunCatFile(oid string, expected string) ([]byte, error) {
 	return content, nil
 }
 
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : updateRef
+  @Description      : 更新引用，类似于实现创建一个新的引用，引入符号链接后是实现更新原有的引用
+  @Params           :
+  @Return           :
+********************************************************************************/
 func updateRef(ref string, value RefValue, deref bool) {
 	if value.symbolic {
 		return
@@ -132,8 +139,8 @@ func getRef(ref string, deref bool) RefValue {
 
 // prettier-ignore
 /*******************************************************************************
-  @Function name    : function
-  @Description      :
+  @Function name    : iterRefs
+  @Description      : 遍历引用的指向
   @Params           :
   @Return           :
 ********************************************************************************/
@@ -165,6 +172,13 @@ func iterRefs(deref bool) <-chan refMap {
 	return ch
 }
 
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : getRefInternal
+  @Description      : 解析引用的底层实现，判断是否需要递归解析
+  @Params           :
+  @Return           :
+********************************************************************************/
 func getRefInternal(ref string, deref bool) (string, RefValue) {
 	path := filepath.Join(GIT_DIR, ref)
 	if fileInfo, err := os.Stat(path); err != nil || fileInfo.IsDir() {

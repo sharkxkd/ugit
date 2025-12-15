@@ -235,8 +235,8 @@ func runCommit(args []string) {
 
 // prettier-ignore
 /*******************************************************************************
-  @Function name    : funtion
-  @Description      :
+  @Function name    : log
+  @Description      : 打印提交的日志记录
   @Params           :
   @Return           :
 ********************************************************************************/
@@ -259,8 +259,8 @@ func runLog(args []string) {
 
 // prettier-ignore
 /*******************************************************************************
-  @Function name    : function
-  @Description      :
+  @Function name    : checkout
+  @Description      : 切换分支
   @Params           :
   @Return           :
 ********************************************************************************/
@@ -278,7 +278,7 @@ func runCheckout(args []string) {
 // prettier-ignore
 /*******************************************************************************
   @Function name    : tag
-  @Description      : 为oid取名字
+  @Description      : 为oid取名字,静态标记
   @Params           :
   @Return           :
 ********************************************************************************/
@@ -292,8 +292,8 @@ func runTag(args []string) {
 
 // prettier-ignore
 /*******************************************************************************
-  @Function name    : function
-  @Description      :
+  @Function name    : k
+  @Description      : 绘图的底层命令
   @Params           :
   @Return           :
 ********************************************************************************/
