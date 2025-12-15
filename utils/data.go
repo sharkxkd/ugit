@@ -109,10 +109,10 @@ func DoRunCatFile(oid string, expected string) ([]byte, error) {
   @Return           :
 ********************************************************************************/
 func updateRef(ref string, value RefValue, deref bool) {
-	if value.symbolic {
-		return
-	}
 	ref, _ = getRefInternal(ref, deref)
+	if value.symbolic {
+		value.value = fmt.Sprintf("ref: %s", value.value)
+	}
 	oid := value.value
 	path := filepath.Join(GIT_DIR, ref)
 	if _, err := common.PathExists(filepath.Dir(path)); err != nil {
@@ -121,6 +121,7 @@ func updateRef(ref string, value RefValue, deref bool) {
 		os.Exit(1)
 	}
 	if err := os.WriteFile(path, []byte(oid), 0644); err != nil {
+		fmt.Println(err)
 		fmt.Printf("error with writing %s file\n", ref)
 	}
 }
@@ -183,17 +184,15 @@ func getRefInternal(ref string, deref bool) (string, RefValue) {
 	path := filepath.Join(GIT_DIR, ref)
 	if fileInfo, err := os.Stat(path); err != nil || fileInfo.IsDir() {
 		if os.IsNotExist(err) {
-			return "", RefValue{symbolic: false, value: ""}
+			return ref, RefValue{symbolic: false, value: ""}
 		}
-		fmt.Printf("error with opening %s file\n", ref)
-		return "", RefValue{symbolic: false, value: ""}
+		return ref, RefValue{symbolic: false, value: ""}
 	}
 	content, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return "", RefValue{symbolic: false, value: ""}
+			return ref, RefValue{symbolic: false, value: ""}
 		}
-		fmt.Printf("error with opening %s file\n", ref)
 	}
 	value := string(content)
 	value = strings.TrimSpace(value)

@@ -36,6 +36,10 @@ type Commit struct {
   @Description      : 输出当前目录结构下的所有子文件的路径
   @Params           : 当前目录
   @Return           : 异常
+  ===================tree Object===================
+  tree
+  Name			OID			Type
+  文件名		对应的键	 类型
 ********************************************************************************/
 func writeTree(directory string) (string, error) {
 	if directory == "" {
@@ -282,7 +286,13 @@ func checkout(oid string) error {
 		return err
 	}
 	readTree(commit.tree)
-	updateRef(HEAD, RefValue{symbolic: false, value: oid}, true)
+	var head RefValue
+	if isBranch(oid) {
+		head = RefValue{symbolic: true, value: fmt.Sprintf("refs/heads/%s", oid)}
+	} else {
+		head = RefValue{symbolic: false, value: oid}
+	}
+	updateRef(HEAD, head, false)
 	return nil
 }
 
@@ -313,7 +323,7 @@ func getOid(name string) string {
 		fmt.Sprint(name),
 		fmt.Sprintf("refs/%s", name),
 		fmt.Sprintf("refs/tags/%s", name),
-		fmt.Sprintf("refs/head/%s", name),
+		fmt.Sprintf("refs/heads/%s", name),
 	}
 	for _, ref := range refsToTry {
 		if res := getRef(ref, true).value; res != "" {
@@ -370,4 +380,12 @@ func iterCommitsAndParents(oids []string) <-chan string {
 ********************************************************************************/
 func createBranch(oid string, name string) {
 	updateRef(fmt.Sprintf("refs/heads/%s", name), RefValue{symbolic: false, value: oid}, true)
+}
+
+func isBranch(oid string) bool {
+	return getRef(oid, true).value != ""
+}
+
+func baseInit() {
+
 }

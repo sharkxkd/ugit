@@ -230,7 +230,7 @@ func runCommit(args []string) {
 		fmt.Printf("fatal commit with error %s", err.Error())
 		os.Exit(1)
 	}
-	fmt.Printf("%s", content)
+	fmt.Printf("%s\n", content)
 }
 
 // prettier-ignore
@@ -350,5 +350,5 @@ func runBranch(args []string) {
 	}
 	oid := getOid(args[0])
 	createBranch(oid, branchName)
-	fmt.Printf("Branch %s created at %s", branchName, oid[:10])
+	fmt.Printf("Branch %s created at %s\n", branchName, oid[:10])
 }
