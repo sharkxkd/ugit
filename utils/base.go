@@ -326,7 +326,7 @@ func getOid(name string) string {
 		fmt.Sprintf("refs/heads/%s", name),
 	}
 	for _, ref := range refsToTry {
-		if res := getRef(ref, true).value; res != "" {
+		if res := getRef(ref, false).value; res != "" {
 			return res
 		}
 	}
@@ -387,5 +387,18 @@ func isBranch(oid string) bool {
 }
 
 func baseInit() {
+	DoInit()
+	// 默认创建master分支
+	updateRef(HEAD, RefValue{symbolic: true, value: "refs/heads/master"}, true)
+}
 
+func getBranchName() string {
+	head := getRef(HEAD, false)
+	if !head.symbolic {
+		return ""
+	}
+	if !strings.HasPrefix(head.value, "refs/heads/") {
+		return ""
+	}
+	return strings.Replace(head.value, "refs/heads/", "", 1)
 }

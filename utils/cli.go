@@ -63,6 +63,8 @@ func ParseArgs() {
 
 	branchCmd := flag.NewFlagSet("branch", flag.ExitOnError)
 	branchCmd.StringVar(&branchName, "name", "Default Branch Name", "分支名称")
+
+	statusCmd := flag.NewFlagSet("status", flag.ExitOnError)
 	switch os.Args[1] {
 	case "init":
 		initCmd.Parse(os.Args[2:])
@@ -107,6 +109,10 @@ func ParseArgs() {
 		branchCmd.Parse(os.Args[2:])
 		remainingArgs := branchCmd.Args()
 		runBranch(remainingArgs)
+	case "status":
+		statusCmd.Parse(os.Args[2:])
+		remainingArgs := statusCmd.Args()
+		runStatus(remainingArgs)
 	default:
 		os.Exit(1)
 	}
@@ -121,7 +127,7 @@ func ParseArgs() {
   @Return           :
 ********************************************************************************/
 func runInit() {
-	DoInit()
+	baseInit()
 	// 获取当前路径并处理，输出成功初始化目录
 	wd, err := os.Getwd()
 	if err != nil {
@@ -351,4 +357,21 @@ func runBranch(args []string) {
 	oid := getOid(args[0])
 	createBranch(oid, branchName)
 	fmt.Printf("Branch %s created at %s\n", branchName, oid[:10])
+}
+
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : status
+  @Description      : print current branch name
+  @Params           :
+  @Return           :
+********************************************************************************/
+func runStatus(args []string) {
+	head := getOid("@")
+	branch := getBranchName()
+	if branch == "" {
+		fmt.Printf("Head detached at %s\n", head[:10])
+	} else {
+		fmt.Printf("On branch %s", branch)
+	}
 }

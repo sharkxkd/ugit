@@ -106,6 +106,7 @@ func DoRunCatFile(oid string, expected string) ([]byte, error) {
   @Function name    : updateRef
   @Description      : 更新引用，类似于实现创建一个新的引用，引入符号链接后是实现更新原有的引用
   @Params           :
+	-deref			: 是否递归更新，默认为true
   @Return           :
 ********************************************************************************/
 func updateRef(ref string, value RefValue, deref bool) {
@@ -131,6 +132,7 @@ func updateRef(ref string, value RefValue, deref bool) {
   @Function name    : getRef
   @Description      : 解析ref文件, 如果包含有ref: 需要递归解析
   @Params           :
+  	-deref			: 获取引用的对象，默认为true
   @Return           :
 ********************************************************************************/
 func getRef(ref string, deref bool) RefValue {
