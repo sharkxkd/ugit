@@ -280,15 +280,16 @@ func getCommit(oid string) (Commit, error) {
   @Params           : commit oid
   @Return           : error
 ********************************************************************************/
-func checkout(oid string) error {
+func checkout(name string) error {
+	oid := getOid(name)
 	commit, err := getCommit(oid)
 	if err != nil {
 		return err
 	}
 	readTree(commit.tree)
 	var head RefValue
-	if isBranch(oid) {
-		head = RefValue{symbolic: true, value: fmt.Sprintf("refs/heads/%s", oid)}
+	if isBranch(name) {
+		head = RefValue{symbolic: true, value: filepath.Join("refs", "heads", name)}
 	} else {
 		head = RefValue{symbolic: false, value: oid}
 	}
@@ -304,14 +305,14 @@ func checkout(oid string) error {
   @Return           :
 ********************************************************************************/
 func createTag(name string, oid string) {
-	ref := fmt.Sprintf("refs/tags/%s", name)
+	ref := filepath.Join("refs", "tags", name)
 	updateRef(ref, RefValue{symbolic: false, value: oid}, true)
 }
 
 // prettier-ignore
 /*******************************************************************************
   @Function name    : getOid
-  @Description      : 遍历寻找对应的tag、head、branch或是oid
+  @Description      : 遍历寻找对应的tag、head、branch或是oid，有名字返回名字，无名字返回oid
   @Params           :
   @Return           :
 ********************************************************************************/
@@ -320,10 +321,10 @@ func getOid(name string) string {
 		name = HEAD
 	}
 	refsToTry := []string{
-		fmt.Sprint(name),
-		fmt.Sprintf("refs/%s", name),
-		fmt.Sprintf("refs/tags/%s", name),
-		fmt.Sprintf("refs/heads/%s", name),
+		filepath.Join(name),
+		filepath.Join("refs", name),
+		filepath.Join("refs", "tags", name),
+		filepath.Join("refs", "heads", name),
 	}
 	for _, ref := range refsToTry {
 		if res := getRef(ref, false).value; res != "" {
@@ -376,29 +377,75 @@ func iterCommitsAndParents(oids []string) <-chan string {
   @Function name    : createBranch
   @Description      : 创建分支，创建引用指向oid
   @Params           :
+	-oid			: commit对应的oid
+	-name			: branch对应的name
   @Return           :
 ********************************************************************************/
 func createBranch(oid string, name string) {
-	updateRef(fmt.Sprintf("refs/heads/%s", name), RefValue{symbolic: false, value: oid}, true)
+	updateRef(filepath.Join("refs", "heads", name), RefValue{symbolic: false, value: oid}, true)
 }
 
-func isBranch(oid string) bool {
-	return getRef(oid, true).value != ""
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : isBranch
+  @Description      : 判断是不是分支名称，判断是否存在
+  @Params           :
+	-branch			: 分支名称
+  @Return           :
+********************************************************************************/
+func isBranch(branch string) bool {
+	return getRef(filepath.Join("refs", "heads", branch), true).value != ""
 }
 
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : baseInit
+  @Description      : init的初始调用，创建仓库并且将head指向master
+  @Params           :
+  @Return           :
+********************************************************************************/
 func baseInit() {
 	DoInit()
 	// 默认创建master分支
-	updateRef(HEAD, RefValue{symbolic: true, value: "refs/heads/master"}, true)
+	updateRef(HEAD, RefValue{symbolic: true, value: filepath.Join("refs", "heads", "master")}, true)
 }
 
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : getBranchName
+  @Description      : 获取当前分支名称
+  @Params           :
+  @Return           :
+********************************************************************************/
 func getBranchName() string {
 	head := getRef(HEAD, false)
 	if !head.symbolic {
 		return ""
 	}
-	if !strings.HasPrefix(head.value, "refs/heads/") {
+	if !strings.HasPrefix(head.value, filepath.Join("refs", "heads")) {
 		return ""
 	}
-	return strings.Replace(head.value, "refs/heads/", "", 1)
+	branch, err := filepath.Rel(filepath.Join("refs", "heads"), head.value)
+	if err != nil {
+		return ""
+	}
+	return branch
+}
+
+func iterBranchName() <-chan string {
+	ch := make(chan string)
+	go func() {
+		defer close(ch)
+		for refmap := range iterRefs(filepath.Join("refs", "heads"), true) {
+			if !strings.HasPrefix(refmap.refname, filepath.Join("refs", "heads")) {
+				continue
+			}
+			branch, err := filepath.Rel(filepath.Join("refs", "heads"), refmap.refname)
+			if err != nil {
+				continue
+			}
+			ch <- branch
+		}
+	}()
+	return ch
 }

@@ -147,7 +147,7 @@ func getRef(ref string, deref bool) RefValue {
   @Params           :
   @Return           :
 ********************************************************************************/
-func iterRefs(deref bool) <-chan refMap {
+func iterRefs(prefix string, deref bool) <-chan refMap {
 
 	ch := make(chan refMap)
 	go func() {
@@ -168,7 +168,9 @@ func iterRefs(deref bool) <-chan refMap {
 			if err != nil {
 				rel = path
 			}
-			ch <- refMap{refname: rel, ref: getRef(rel, deref)}
+			if strings.HasPrefix(rel, prefix) {
+				ch <- refMap{refname: rel, ref: getRef(rel, deref)}
+			}
 			return nil
 		})
 	}()
@@ -178,9 +180,11 @@ func iterRefs(deref bool) <-chan refMap {
 // prettier-ignore
 /*******************************************************************************
   @Function name    : getRefInternal
-  @Description      : 解析引用的底层实现，判断是否需要递归解析
-  @Params           :
-  @Return           :
+  @Description      : deref为true会解析到最父节点的引用
+  @Params           : 
+	-ref			: 待解析分支/tag名称
+	-deref			: 是否递归解析
+  @Return           : 为true是最靠近oid的分支名+oid，为false是自己的分支名+父分支/oid
 ********************************************************************************/
 func getRefInternal(ref string, deref bool) (string, RefValue) {
 	path := filepath.Join(GIT_DIR, ref)

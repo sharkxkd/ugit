@@ -272,10 +272,8 @@ func runLog(args []string) {
 ********************************************************************************/
 func runCheckout(args []string) {
 	if len(args) < 1 {
-		fmt.Println("error checkout without an oid")
-		os.Exit(1)
+		args[0] = "@"
 	}
-	args[0] = getOid(args[0])
 	if err := checkout(args[0]); err != nil {
 		fmt.Printf("Error happened while checkout with %s, description %s", args[0], err)
 	}
@@ -307,7 +305,7 @@ func runK(args []string) {
 	dot := "digraph commits {\n"
 
 	oids := []string{}
-	for ref := range iterRefs(false) {
+	for ref := range iterRefs("",false) {
 		dot += fmt.Sprintf("\"%s\" [shape=note]\n", ref.refname)
 		dot += fmt.Sprintf("\"%s\" -> \"%s\"", ref.refname, ref.ref.value)
 		if !ref.ref.symbolic {
@@ -355,8 +353,23 @@ func runBranch(args []string) {
 		args = append(args, "@")
 	}
 	oid := getOid(args[0])
-	createBranch(oid, branchName)
-	fmt.Printf("Branch %s created at %s\n", branchName, oid[:10])
+	if branchName == "Default Branch Name"{
+		// 打印分支
+		current := getBranchName()
+		for branch := range iterBranchName(){
+			prefix := " "
+			if current == branch {
+				prefix = "*"
+			}
+			fmt.Printf("%s %s\n",prefix,branch)
+		}
+	} else {
+		// 创建分支
+		oid = getOid(oid)
+		createBranch(oid, branchName)
+		fmt.Printf("Branch %s created at %s\n", branchName, oid[:10])
+	}
+	
 }
 
 // prettier-ignore
