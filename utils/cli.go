@@ -250,14 +250,19 @@ func runLog(args []string) {
 	if len(args) < 1 {
 		args = append(args, "@")
 	}
+	refs := make(map[string][]string)
+	for refmap := range iterRefs("", true) {
+		refs[refmap.ref.value] = append(refs[refmap.ref.value], refmap.refname)
+	}
+
 	oid := getOid(args[0])
 	for oid := range iterCommitsAndParents([]string{oid}) {
 		commit, err := getCommit(oid)
 		if err != nil {
 			fmt.Printf("fatal print log with error %s", err.Error())
 		}
-
-		fmt.Printf("commit %s\n", oid)
+		refsString := strings.Join(refs[oid], ",")
+		fmt.Printf("commit %s %s\n", oid, refsString)
 		commit.message = "    " + commit.message
 		fmt.Println(strings.ReplaceAll(commit.message, "\n", "\n    "))
 	}
@@ -305,7 +310,7 @@ func runK(args []string) {
 	dot := "digraph commits {\n"
 
 	oids := []string{}
-	for ref := range iterRefs("",false) {
+	for ref := range iterRefs("", false) {
 		dot += fmt.Sprintf("\"%s\" [shape=note]\n", ref.refname)
 		dot += fmt.Sprintf("\"%s\" -> \"%s\"", ref.refname, ref.ref.value)
 		if !ref.ref.symbolic {
@@ -353,15 +358,15 @@ func runBranch(args []string) {
 		args = append(args, "@")
 	}
 	oid := getOid(args[0])
-	if branchName == "Default Branch Name"{
+	if branchName == "Default Branch Name" {
 		// 打印分支
 		current := getBranchName()
-		for branch := range iterBranchName(){
+		for branch := range iterBranchName() {
 			prefix := " "
 			if current == branch {
 				prefix = "*"
 			}
-			fmt.Printf("%s %s\n",prefix,branch)
+			fmt.Printf("%s %s\n", prefix, branch)
 		}
 	} else {
 		// 创建分支
@@ -369,7 +374,7 @@ func runBranch(args []string) {
 		createBranch(oid, branchName)
 		fmt.Printf("Branch %s created at %s\n", branchName, oid[:10])
 	}
-	
+
 }
 
 // prettier-ignore

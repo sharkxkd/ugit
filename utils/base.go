@@ -328,7 +328,7 @@ func getOid(name string) string {
 	}
 	for _, ref := range refsToTry {
 		if res := getRef(ref, false).value; res != "" {
-			return res
+			return getRef(ref, true).value
 		}
 	}
 	if common.IsSHA1(name) {
