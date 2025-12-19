@@ -432,6 +432,13 @@ func getBranchName() string {
 	return branch
 }
 
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : iterBranchName
+  @Description      : 遍历分支名称
+  @Params           :
+  @Return           :
+********************************************************************************/
 func iterBranchName() <-chan string {
 	ch := make(chan string)
 	go func() {
@@ -448,4 +455,15 @@ func iterBranchName() <-chan string {
 		}
 	}()
 	return ch
+}
+
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : reset
+  @Description      : 更新引用到具体的commitId
+  @Params           :
+  @Return           :
+********************************************************************************/
+func reset(commitId string) {
+	updateRef(HEAD, RefValue{symbolic: false, value: commitId}, true)
 }

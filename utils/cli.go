@@ -21,6 +21,7 @@ var type_ string
 var message string
 var tagName string
 var branchName string
+var commitId string
 
 type RefValue struct {
 	symbolic bool
@@ -65,6 +66,9 @@ func ParseArgs() {
 	branchCmd.StringVar(&branchName, "name", "Default Branch Name", "分支名称")
 
 	statusCmd := flag.NewFlagSet("status", flag.ExitOnError)
+
+	resetCmd := flag.NewFlagSet("reset", flag.ExitOnError)
+	resetCmd.StringVar(&commitId, "commit", "Default Commit", "提交OID")
 	switch os.Args[1] {
 	case "init":
 		initCmd.Parse(os.Args[2:])
@@ -113,6 +117,10 @@ func ParseArgs() {
 		statusCmd.Parse(os.Args[2:])
 		remainingArgs := statusCmd.Args()
 		runStatus(remainingArgs)
+	case "reset":
+		resetCmd.Parse(os.Args[2:])
+		remainingArgs := resetCmd.Args()
+		runReset(remainingArgs)
 	default:
 		os.Exit(1)
 	}
@@ -392,4 +400,19 @@ func runStatus(args []string) {
 	} else {
 		fmt.Printf("On branch %s", branch)
 	}
+}
+
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : reset
+  @Description      : 实现撤回提交到当前分支的某个节点，前面的提交都会丢失
+  @Params           :
+  @Return           :
+********************************************************************************/
+func runReset(args []string) {
+	if(commitId == "Default Commit"){
+		fmt.Printf("Unknown Commit Id\n")
+		os.Exit(1)
+	}
+	reset(commitId)
 }
