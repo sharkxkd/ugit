@@ -10,6 +10,7 @@ package utils
 
 import (
 	"fmt"
+	"io/fs"
 	"log"
 	"maps"
 	"os"
@@ -479,4 +480,40 @@ func printCommit(oid string, commit Commit, refsstring string) {
 	fmt.Printf("commit %s %s\n", oid, refsstring)
 	commit.message = "    " + commit.message
 	fmt.Println(strings.ReplaceAll(commit.message, "\n", "\n    "))
+}
+
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : getWorkingTree
+  @Description      : 获取当前工作目录的Tree
+  @Params           :
+  @Return           :
+********************************************************************************/
+func getWorkingTree() map[string]string {
+	result := make(map[string]string)
+	err := filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !isIngnored(path) && !d.IsDir() {
+			content, err := os.ReadFile(path)
+			if err != nil {
+				return err
+			}
+			oid, err := DoHashObject(content, "blob")
+			if err != nil {
+				return err
+			}
+			rel, err := filepath.Rel(GIT_DIR, path)
+			if err != nil {
+				return err
+			}
+			result[rel] = oid
+		}
+		return nil
+	})
+	if err != nil {
+		return map[string]string{}
+	}
+	return result
 }

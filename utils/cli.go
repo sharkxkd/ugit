@@ -71,6 +71,8 @@ func ParseArgs() {
 	resetCmd.StringVar(&commitId, "commit", "Default Commit", "提交OID")
 
 	showCmd := flag.NewFlagSet("show", flag.ExitOnError)
+
+	diffCmd := flag.NewFlagSet("diff", flag.ExitOnError)
 	switch os.Args[1] {
 	case "init":
 		initCmd.Parse(os.Args[2:])
@@ -127,6 +129,10 @@ func ParseArgs() {
 		showCmd.Parse(os.Args[2:])
 		remainingArgs := showCmd.Args()
 		runShow(remainingArgs)
+	case "diff":
+		diffCmd.Parse(os.Args[2:])
+		remainingArgs := diffCmd.Args()
+		runDiff(remainingArgs)
 	default:
 		os.Exit(1)
 	}
@@ -440,7 +446,7 @@ func runShow(args []string) {
 	}
 	parentOid := ""
 	if commit.parent != "" {
-		parentCommit,err := getCommit(commit.parent)
+		parentCommit, err := getCommit(commit.parent)
 		if err != nil {
 			fmt.Printf("Error with get Commit of %s\n", commit.parent)
 			os.Exit(1)
@@ -449,5 +455,25 @@ func runShow(args []string) {
 	}
 	printCommit(oid, commit, "")
 	result := diffTrees(getTree(parentOid, ""), getTree(commit.tree, ""))
+	fmt.Println(result)
+}
+
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : diff
+  @Description      : 将工作区的内容和上一次的提交进行对比，查看异同
+  @Params           :
+  @Return           :
+********************************************************************************/
+func runDiff(args []string) {
+	if len(args) < 1 {
+		args = append(args, "@")
+	}
+	lastTree, err := getCommit(getOid(args[0]))
+	if err != nil {
+		fmt.Printf("Error with getCommit %s\n", args[0])
+		os.Exit(1)
+	}
+	result := diffTrees(getTree(lastTree.tree, ""), getWorkingTree())
 	fmt.Println(result)
 }
