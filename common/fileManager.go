@@ -8,7 +8,10 @@
 ********************************************************************************/
 package common
 
-import "os"
+import (
+	"fmt"
+	"os"
+)
 
 // prettier-ignore
 /*******************************************************************************
@@ -59,4 +62,24 @@ func IsSHA1(s string) bool {
 	}
 
 	return true
+}
+
+func OenpTmp(content []byte) (*os.File, error) {
+	f, err := os.CreateTemp("", "diff-blob-*")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temp file: %w", err)
+	}
+	if _, err := f.Write(content); err != nil {
+		f.Close()
+		os.Remove(f.Name())
+		return nil, err
+	}
+	// 强制刷盘，确保外部命令 diff 能读到完整内容
+	if err := f.Sync(); err != nil {
+		f.Close()
+		os.Remove(f.Name())
+		return nil, err
+	}
+	
+	return f, nil
 }

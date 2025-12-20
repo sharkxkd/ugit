@@ -86,6 +86,9 @@ func DoHashObject(content []byte, fileType string) (string, error) {
 	-error			: 中途遇到的一些异常
 ********************************************************************************/
 func DoRunCatFile(oid string, expected string) ([]byte, error) {
+	if oid == "" {
+		return []byte{}, nil
+	}
 	obj, err := os.ReadFile(filepath.Join(GIT_DIR, OBJECTS, oid))
 	if err != nil {
 		return []byte{}, err
@@ -181,7 +184,7 @@ func iterRefs(prefix string, deref bool) <-chan refMap {
 /*******************************************************************************
   @Function name    : getRefInternal
   @Description      : deref为true会解析到最父节点的引用
-  @Params           : 
+  @Params           :
 	-ref			: 待解析分支/tag名称
 	-deref			: 是否递归解析
   @Return           : 为true是最靠近oid的分支名+oid，为false是自己的分支名+父分支/oid

@@ -8,7 +8,12 @@
 ********************************************************************************/
 package utils
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+	"os/exec"
+	"ugit/common"
+)
 
 type TreeComparison struct {
 	path string
@@ -26,13 +31,7 @@ type TreeComparison struct {
 func diffTrees(fromTree map[string]string, toTree map[string]string) string {
 	output := ""
 	for treeComparsion := range compareTrees(fromTree, toTree) {
-		if treeComparsion.fOid == "" {
-			output += fmt.Sprintf("Add: %s\n", treeComparsion.path)
-		} else if treeComparsion.tOid == "" {
-			output += fmt.Sprintf("Delete: %s\n", treeComparsion.path)
-		} else if treeComparsion.fOid != treeComparsion.tOid {
-			output += fmt.Sprintf("Changed: %s\n", treeComparsion.path)
-		}
+		output += diffBlobs(treeComparsion.fOid, treeComparsion.tOid, treeComparsion.path)
 	}
 	return output
 }
@@ -58,4 +57,59 @@ func compareTrees(fromTree map[string]string, toTree map[string]string) <-chan T
 		close(ch)
 	}()
 	return ch
+}
+
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : diffBlobs
+  @Description      : 调用diff命令检查两个文件的异同
+  @Params           :
+  @Return           : 输出diff命令的输出
+********************************************************************************/
+func diffBlobs(fromOid string, toOid string, path string) string {
+	if path == "" {
+		path = "blob"
+	}
+	fContent, err := DoRunCatFile(fromOid, "blob")
+	if err != nil {
+		fmt.Printf("error with cat file %s\n", fromOid)
+		return ""
+	}
+	from, err := common.OenpTmp(fContent)
+	if err != nil {
+		return ""
+	}
+	defer from.Close()
+	defer os.Remove(from.Name())
+	tContent, err := DoRunCatFile(toOid, "blob")
+	if err != nil {
+		fmt.Printf("error with cat file %s\n", toOid)
+		return ""
+	}
+
+	to, err := common.OenpTmp(tContent)
+	if err != nil {
+		return ""
+	}
+	defer to.Close()
+	defer os.Remove(to.Name())
+	// 执行命令
+	cmd := exec.Command("diff",
+		"--unified",
+		"--show-c-function",
+		"--label", "a/"+path, from.Name(),
+		"--label", "b/"+path, to.Name(),
+	)
+	output, err := cmd.CombinedOutput()
+	// 处理 diff 的特定退出码
+	if err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			if exitErr.ExitCode() == 1 {
+				return string(output) // 1 表示有差异，是正常结果
+			}
+		}
+		fmt.Println("error:", err)
+		return ""
+	}
+	return string(output)
 }

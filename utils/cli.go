@@ -423,7 +423,7 @@ func runReset(args []string) {
 
 // prettier-ignore
 /*******************************************************************************
-  @Function name    : function
+  @Function name    : show
   @Description      :
   @Params           :
   @Return           :
