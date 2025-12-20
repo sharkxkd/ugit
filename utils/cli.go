@@ -436,6 +436,18 @@ func runShow(args []string) {
 	commit, err := getCommit(oid)
 	if err != nil {
 		fmt.Printf("Error to show with %s\n", args[0])
+		os.Exit(1)
+	}
+	parentOid := ""
+	if commit.parent != "" {
+		parentCommit,err := getCommit(commit.parent)
+		if err != nil {
+			fmt.Printf("Error with get Commit of %s\n", commit.parent)
+			os.Exit(1)
+		}
+		parentOid = parentCommit.tree
 	}
 	printCommit(oid, commit, "")
+	result := diffTrees(getTree(parentOid, ""), getTree(commit.tree, ""))
+	fmt.Println(result)
 }
