@@ -69,6 +69,8 @@ func ParseArgs() {
 
 	resetCmd := flag.NewFlagSet("reset", flag.ExitOnError)
 	resetCmd.StringVar(&commitId, "commit", "Default Commit", "提交OID")
+
+	showCmd := flag.NewFlagSet("show", flag.ExitOnError)
 	switch os.Args[1] {
 	case "init":
 		initCmd.Parse(os.Args[2:])
@@ -121,6 +123,10 @@ func ParseArgs() {
 		resetCmd.Parse(os.Args[2:])
 		remainingArgs := resetCmd.Args()
 		runReset(remainingArgs)
+	case "show":
+		showCmd.Parse(os.Args[2:])
+		remainingArgs := showCmd.Args()
+		runShow(remainingArgs)
 	default:
 		os.Exit(1)
 	}
@@ -270,9 +276,7 @@ func runLog(args []string) {
 			fmt.Printf("fatal print log with error %s", err.Error())
 		}
 		refsString := strings.Join(refs[oid], ",")
-		fmt.Printf("commit %s %s\n", oid, refsString)
-		commit.message = "    " + commit.message
-		fmt.Println(strings.ReplaceAll(commit.message, "\n", "\n    "))
+		printCommit(oid, commit, refsString)
 	}
 }
 
@@ -410,9 +414,28 @@ func runStatus(args []string) {
   @Return           :
 ********************************************************************************/
 func runReset(args []string) {
-	if(commitId == "Default Commit"){
+	if commitId == "Default Commit" {
 		fmt.Printf("Unknown Commit Id\n")
 		os.Exit(1)
 	}
 	reset(commitId)
+}
+
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : function
+  @Description      :
+  @Params           :
+  @Return           :
+********************************************************************************/
+func runShow(args []string) {
+	if len(args) < 1 {
+		args = append(args, getOid("@"))
+	}
+	oid := args[0]
+	commit, err := getCommit(oid)
+	if err != nil {
+		fmt.Printf("Error to show with %s\n", args[0])
+	}
+	printCommit(oid, commit, "")
 }

@@ -467,3 +467,16 @@ func iterBranchName() <-chan string {
 func reset(commitId string) {
 	updateRef(HEAD, RefValue{symbolic: false, value: commitId}, true)
 }
+
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : printCommit
+  @Description      :
+  @Params           :
+  @Return           :
+********************************************************************************/
+func printCommit(oid string, commit Commit, refsstring string) {
+	fmt.Printf("commit %s %s\n", oid, refsstring)
+	commit.message = "    " + commit.message
+	fmt.Println(strings.ReplaceAll(commit.message, "\n", "\n    "))
+}
