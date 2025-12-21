@@ -408,7 +408,16 @@ func runStatus(args []string) {
 	if branch == "" {
 		fmt.Printf("Head detached at %s\n", head[:10])
 	} else {
-		fmt.Printf("On branch %s", branch)
+		fmt.Printf("On branch %s\n", branch)
+	}
+	fmt.Println("\nChanges to be commited: ")
+	headTree, err := getCommit(head)
+	if err != nil {
+		fmt.Println("error with status after getCommit")
+		os.Exit(1)
+	}
+	for changedFile := range iterChangedFiles(getTree(headTree.tree, ""), getWorkingTree()) {
+		fmt.Printf("%10s : %s\n", changedFile.action, changedFile.path)
 	}
 }
 

@@ -504,7 +504,7 @@ func getWorkingTree() map[string]string {
 			if err != nil {
 				return err
 			}
-			rel, err := filepath.Rel(GIT_DIR, path)
+			rel, err := filepath.Rel("", path)
 			if err != nil {
 				return err
 			}

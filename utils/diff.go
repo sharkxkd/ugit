@@ -21,6 +21,11 @@ type TreeComparison struct {
 	tOid string
 }
 
+type ChangedFileType struct {
+	path   string
+	action string
+}
+
 // prettier-ignore
 /*******************************************************************************
   @Function name    : diffTrees
@@ -36,6 +41,13 @@ func diffTrees(fromTree map[string]string, toTree map[string]string) string {
 	return output
 }
 
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : compareTrees
+  @Description      : 比较两个树的差异
+  @Params           :
+  @Return           :
+********************************************************************************/
 func compareTrees(fromTree map[string]string, toTree map[string]string) <-chan TreeComparison {
 	ch := make(chan TreeComparison)
 	go func() {
@@ -112,4 +124,29 @@ func diffBlobs(fromOid string, toOid string, path string) string {
 		return ""
 	}
 	return string(output)
+}
+
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : iterchangedFiles
+  @Description      : 迭代展示被修改的文件，包括删除/更新/新增
+  @Params           :
+  @Return           :
+********************************************************************************/
+func iterChangedFiles(fromTree map[string]string, toTree map[string]string) <-chan ChangedFileType {
+	ch := make(chan ChangedFileType)
+	go func() {
+		for comparison := range compareTrees(fromTree, toTree) {
+			if comparison.fOid == "" {
+				ch <- ChangedFileType{path: comparison.path, action: "Created"}
+			} else if comparison.tOid == "" {
+				ch <- ChangedFileType{path: comparison.path, action: "Deleted"}
+			} else {
+				ch <- ChangedFileType{path: comparison.path, action: "Modified"}
+			}
+		}
+		close(ch)
+
+	}()
+	return ch
 }
