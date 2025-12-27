@@ -150,3 +150,70 @@ func iterChangedFiles(fromTree map[string]string, toTree map[string]string) <-ch
 	}()
 	return ch
 }
+
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : mergeTrees
+  @Description      : 合并所有的文件并返回一个路径到内容的映射
+  @Params           :
+  @Return           :
+********************************************************************************/
+func mergeTrees(headTrees map[string]string, otherThrees map[string]string) map[string][]byte {
+	tree := make(map[string][]byte)
+	for treeComparsion := range compareTrees(headTrees, otherThrees) {
+		tree[treeComparsion.path] = mergeBlobs(treeComparsion.fOid, treeComparsion.tOid)
+	}
+	return tree
+}
+
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : mergeBlobs
+  @Description      : 合并两个文件并返回字节流
+  @Params           :
+  @Return           :
+********************************************************************************/
+func mergeBlobs(foid string, toid string) []byte {
+	// 写入两个临时文件进行合并
+	fContent, err := DoRunCatFile(foid, "blob")
+	if err != nil {
+		fmt.Printf("error with cat file %s\n", foid)
+		os.Exit(1)
+	}
+	from, err := common.OenpTmp(fContent)
+	if err != nil {
+		os.Exit(1)
+	}
+	defer from.Close()
+	defer os.Remove(from.Name())
+	tContent, err := DoRunCatFile(toid, "blob")
+	if err != nil {
+		fmt.Printf("error with cat file %s\n", toid)
+		os.Exit(1)
+	}
+
+	to, err := common.OenpTmp(tContent)
+	if err != nil {
+		os.Exit(1)
+	}
+	defer to.Close()
+	defer os.Remove(to.Name())
+	// 执行命令
+	cmd := exec.Command("diff",
+		"-DHEAD",
+		from.Name(),
+		to.Name(),
+	)
+	output, err := cmd.CombinedOutput()
+	// 处理 diff 的特定退出码
+	if err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			if exitErr.ExitCode() == 1 {
+				return output // 1 表示有差异，是正常结果
+			}
+		}
+		fmt.Println("error:", err)
+		os.Exit(1)
+	}
+	return output
+}

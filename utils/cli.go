@@ -73,6 +73,9 @@ func ParseArgs() {
 	showCmd := flag.NewFlagSet("show", flag.ExitOnError)
 
 	diffCmd := flag.NewFlagSet("diff", flag.ExitOnError)
+
+	mergeCmd := flag.NewFlagSet("merge", flag.ExitOnError)
+	mergeCmd.StringVar(&branchName, "commit", "master", "分支名")
 	switch os.Args[1] {
 	case "init":
 		initCmd.Parse(os.Args[2:])
@@ -133,6 +136,10 @@ func ParseArgs() {
 		diffCmd.Parse(os.Args[2:])
 		remainingArgs := diffCmd.Args()
 		runDiff(remainingArgs)
+	case "merge":
+		mergeCmd.Parse(os.Args[2:])
+		remainingArgs := mergeCmd.Args()
+		runMerge(remainingArgs)
 	default:
 		os.Exit(1)
 	}
@@ -485,4 +492,15 @@ func runDiff(args []string) {
 	}
 	result := diffTrees(getTree(lastTree.tree, ""), getWorkingTree())
 	fmt.Println(result)
+}
+
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : function
+  @Description      :
+  @Params           :
+  @Return           :
+********************************************************************************/
+func runMerge(args []string) {
+	merge(getOid(branchName))
 }

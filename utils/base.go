@@ -517,3 +517,38 @@ func getWorkingTree() map[string]string {
 	}
 	return result
 }
+
+func merge(other string) {
+	// 1. 获取当前分支头节点对应的oid
+	headOid := getRef(HEAD, true).value
+	cHead, err := getCommit(headOid)
+	if err != nil {
+		fmt.Printf("Error with merging branches %s\n", other)
+		os.Exit(1)
+	}
+	cOther, err := getCommit(other)
+	if err != nil {
+		fmt.Printf("Error with merging branches %s\n", other)
+		os.Exit(1)
+	}
+	// 2. 将两个分支的内容合并并读取到工作区
+	readTreeMerged(cHead.tree, cOther.tree)
+	fmt.Println("Merged in working tree")
+
+}
+
+func readTreeMerged(tHead string, tOther string) {
+	// 1. 清除当前工作区的所有内容
+	emptyCurrentDirectory(".")
+	// 2. 获取当前两个分支对应的所有子文件夹的映射情况并且进行合并
+	for path, content := range mergeTrees(getTree(tHead, "."), getTree(tOther, ".")) {
+		if _, err := common.PathExists(filepath.Dir(path)); err != nil {
+			fmt.Printf("Error with creating dir on %s\n", path)
+			os.Exit(1)
+		}
+		if err := os.WriteFile(path, content, 0644); err != nil {
+			fmt.Printf("Error with writing file on %s\n", path)
+			os.Exit(1)
+		}
+	}
+}
