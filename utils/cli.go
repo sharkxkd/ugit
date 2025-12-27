@@ -417,6 +417,11 @@ func runStatus(args []string) {
 	} else {
 		fmt.Printf("On branch %s\n", branch)
 	}
+
+	mergeHeadValue := getRef(MERGE_HEAD, true).value
+	if mergeHeadValue != "" {
+		fmt.Printf("Megering with %s\n", mergeHeadValue[:10])
+	}
 	fmt.Println("\nChanges to be commited: ")
 	headTree, err := getCommit(head)
 	if err != nil {

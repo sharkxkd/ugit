@@ -25,6 +25,7 @@ const GIT_DIR = ".ugit"
 const OBJECTS = "objects"
 const HEAD = "HEAD"
 const REFS = ".ugit/refs"
+const MERGE_HEAD = "MERGE_HEAD"
 
 type refMap struct {
 	refname string
@@ -213,4 +214,18 @@ func getRefInternal(ref string, deref bool) (string, RefValue) {
 		}
 	}
 	return ref, RefValue{symbolic: isSymbolic, value: value}
+}
+
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : deleteRef
+  @Description      : 默认支持deref是true
+  @Params           :
+  @Return           :
+********************************************************************************/
+func deleteRefs(ref string, deref bool) {
+	ref, _ = getRefInternal(ref, deref)
+	if err := os.Remove(filepath.Join(GIT_DIR, ref)); err != nil {
+		fmt.Println(err)
+	}
 }

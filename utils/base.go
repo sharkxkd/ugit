@@ -228,6 +228,10 @@ func commit(message string) (string, error) {
 	if poid := getRef(HEAD, true).value; poid != "" {
 		commitMessage += fmt.Sprintf("parent %s\n", poid)
 	}
+	if mpoid := getRef(MERGE_HEAD, true).value; mpoid != "" {
+		commitMessage += fmt.Sprintf("parent %s\n", mpoid)
+		deleteRefs(MERGE_HEAD, false)
+	}
 	commitMessage += fmt.Sprintln()
 	commitMessage += fmt.Sprintln(message)
 	oid, err = DoHashObject([]byte(commitMessage), "commit")
@@ -368,7 +372,7 @@ func iterCommitsAndParents(oids []string) <-chan string {
 				fmt.Println("error with itering commits and parents")
 			}
 			stack = append(stack, commit.parents[0])
-			stack = append(commit.parents[1:],stack...)
+			stack = append(commit.parents[1:], stack...)
 		}
 	}()
 	return ch
@@ -532,10 +536,11 @@ func merge(other string) {
 		fmt.Printf("Error with merging branches %s\n", other)
 		os.Exit(1)
 	}
+	updateRef(MERGE_HEAD, RefValue{false, other}, true)
 	// 2. 将两个分支的内容合并并读取到工作区
 	readTreeMerged(cHead.tree, cOther.tree)
 	fmt.Println("Merged in working tree")
-
+	fmt.Println("Merged in working tree\nPlease commit")
 }
 
 func readTreeMerged(tHead string, tOther string) {
