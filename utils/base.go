@@ -27,7 +27,7 @@ type dirType struct {
 
 type Commit struct {
 	tree    string
-	parent  string
+	parents []string
 	message string
 }
 
@@ -263,7 +263,7 @@ func getCommit(oid string) (Commit, error) {
 		if values[0] == "tree" {
 			commit.tree = values[1]
 		} else if values[0] == "parent" {
-			commit.parent = values[1]
+			commit.parents = append(commit.parents, values[1])
 		} else {
 			fmt.Printf("Unknown Field %s\n", values[0])
 		}
@@ -367,7 +367,8 @@ func iterCommitsAndParents(oids []string) <-chan string {
 			if err != nil {
 				fmt.Println("error with itering commits and parents")
 			}
-			stack = append(stack, commit.parent)
+			stack = append(stack, commit.parents[0])
+			stack = append(commit.parents[1:],stack...)
 		}
 	}()
 	return ch

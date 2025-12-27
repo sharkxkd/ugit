@@ -349,8 +349,8 @@ func runK(args []string) {
 			os.Exit(1)
 		}
 		dot += fmt.Sprintf("\"%s\" [shape=box style=filled label=\"%s\"]", oid, oid[:10])
-		if commit.parent != "" {
-			dot += fmt.Sprintf("\"%s\" -> \"%s\"", oid, commit.parent)
+		for parent := range commit.parents {
+			dot += fmt.Sprintf("\"%s\" -> \"%s\"", oid, parent)
 		}
 	}
 	dot += "}"
@@ -461,10 +461,10 @@ func runShow(args []string) {
 		os.Exit(1)
 	}
 	parentOid := ""
-	if commit.parent != "" {
-		parentCommit, err := getCommit(commit.parent)
+	if len(commit.parents) > 0 {
+		parentCommit, err := getCommit(commit.parents[0])
 		if err != nil {
-			fmt.Printf("Error with get Commit of %s\n", commit.parent)
+			fmt.Printf("Error with get Commit of %s\n", commit.parents[0])
 			os.Exit(1)
 		}
 		parentOid = parentCommit.tree
