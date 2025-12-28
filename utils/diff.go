@@ -36,7 +36,9 @@ type ChangedFileType struct {
 func diffTrees(fromTree map[string]string, toTree map[string]string) string {
 	output := ""
 	for treeComparsion := range compareTrees(fromTree, toTree) {
-		output += diffBlobs(treeComparsion.fOid, treeComparsion.tOid, treeComparsion.path)
+		if treeComparsion.fOid != treeComparsion.tOid {
+			output += diffBlobs(treeComparsion.fOid, treeComparsion.tOid, treeComparsion.path)
+		}
 	}
 	return output
 }
@@ -56,7 +58,7 @@ func compareTrees(fromTree map[string]string, toTree map[string]string) <-chan T
 		for fPath, fOid := range fromTree {
 			if toTree[fPath] == "" {
 				ch <- TreeComparison{path: fPath, fOid: fOid}
-			} else if fOid != toTree[fPath] {
+			} else {
 				ch <- TreeComparison{path: fPath, fOid: fOid, tOid: toTree[fPath]}
 			}
 		}
@@ -137,12 +139,14 @@ func iterChangedFiles(fromTree map[string]string, toTree map[string]string) <-ch
 	ch := make(chan ChangedFileType)
 	go func() {
 		for comparison := range compareTrees(fromTree, toTree) {
-			if comparison.fOid == "" {
-				ch <- ChangedFileType{path: comparison.path, action: "Created"}
-			} else if comparison.tOid == "" {
-				ch <- ChangedFileType{path: comparison.path, action: "Deleted"}
-			} else {
-				ch <- ChangedFileType{path: comparison.path, action: "Modified"}
+			if comparison.fOid != comparison.tOid {
+				if comparison.fOid == "" {
+					ch <- ChangedFileType{path: comparison.path, action: "Created"}
+				} else if comparison.tOid == "" {
+					ch <- ChangedFileType{path: comparison.path, action: "Deleted"}
+				} else {
+					ch <- ChangedFileType{path: comparison.path, action: "Modified"}
+				}
 			}
 		}
 		close(ch)

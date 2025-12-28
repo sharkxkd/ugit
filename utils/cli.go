@@ -76,6 +76,8 @@ func ParseArgs() {
 
 	mergeCmd := flag.NewFlagSet("merge", flag.ExitOnError)
 	mergeCmd.StringVar(&branchName, "commit", "master", "分支名")
+
+	mergeBaseCmd := flag.NewFlagSet("merge-base", flag.ExitOnError)
 	switch os.Args[1] {
 	case "init":
 		initCmd.Parse(os.Args[2:])
@@ -140,6 +142,10 @@ func ParseArgs() {
 		mergeCmd.Parse(os.Args[2:])
 		remainingArgs := mergeCmd.Args()
 		runMerge(remainingArgs)
+	case "merge-base":
+		mergeBaseCmd.Parse(os.Args[2:])
+		remainingArgs := mergeBaseCmd.Args()
+		runMergeBase(remainingArgs)
 	default:
 		os.Exit(1)
 	}
@@ -348,9 +354,9 @@ func runK(args []string) {
 			fmt.Println("error with drawing graph")
 			os.Exit(1)
 		}
-		dot += fmt.Sprintf("\"%s\" [shape=box style=filled label=\"%s\"]", oid, oid[:10])
+		dot += fmt.Sprintf("\"%s\" [shape=box style=filled label=\"%s\"]\n", oid, oid[:10])
 		for _, parent := range commit.parents {
-			dot += fmt.Sprintf("\"%s\" -> \"%s\"", oid, parent)
+			dot += fmt.Sprintf("\"%s\" -> \"%s\"\n", oid, parent)
 		}
 	}
 	dot += "}"
@@ -508,4 +514,19 @@ func runDiff(args []string) {
 ********************************************************************************/
 func runMerge(args []string) {
 	merge(getOid(branchName))
+}
+
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : merge-base
+  @Description      : 寻找两个oid对应的第一个公共父提交
+  @Params           :
+  @Return           :
+********************************************************************************/
+func runMergeBase(args []string) {
+	if len(args) < 2 {
+		fmt.Println("dismissing at least two commits")
+		os.Exit(1)
+	}
+	fmt.Println(getMergeBase(args[0], args[1]))
 }

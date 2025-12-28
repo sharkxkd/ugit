@@ -97,7 +97,7 @@ func writeTree(directory string) (string, error) {
   @Return           : 返回是否存在.ugit
 ********************************************************************************/
 func isIngnored(path string) bool {
-	return strings.Contains(path, ".ugit") || strings.Contains(path, ".git")
+	return strings.Contains(path, ".ugit") || strings.Contains(path, ".git") || filepath.Base(path) == "ugit"
 }
 
 // prettier-ignore
@@ -371,8 +371,10 @@ func iterCommitsAndParents(oids []string) <-chan string {
 			if err != nil {
 				fmt.Println("error with itering commits and parents")
 			}
-			stack = append(stack, commit.parents[0])
-			stack = append(commit.parents[1:], stack...)
+			if len(commit.parents) > 0 {
+				stack = append(stack, commit.parents[:1]...)
+				stack = append(commit.parents[1:], stack...)
+			}
 		}
 	}()
 	return ch
@@ -539,7 +541,6 @@ func merge(other string) {
 	updateRef(MERGE_HEAD, RefValue{false, other}, true)
 	// 2. 将两个分支的内容合并并读取到工作区
 	readTreeMerged(cHead.tree, cOther.tree)
-	fmt.Println("Merged in working tree")
 	fmt.Println("Merged in working tree\nPlease commit")
 }
 
@@ -557,4 +558,26 @@ func readTreeMerged(tHead string, tOther string) {
 			os.Exit(1)
 		}
 	}
+}
+
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : getMergeBase
+  @Description      : 获取两个提交的第一个公共父节点
+  @Params           :
+  @Return           :
+********************************************************************************/
+func getMergeBase(oid1 string, oid2 string) string {
+	parents1 := iterCommitsAndParents([]string{oid1})
+	set := make(map[string]bool)
+	for parent := range parents1 {
+		set[parent] = true
+	}
+	for parent := range iterCommitsAndParents([]string{oid2}) {
+		if _, ok := set[parent]; ok {
+			return parent
+		}
+	}
+	fmt.Printf("Cann't find a common parent with %s and %s\n", oid1, oid2)
+	return ""
 }
