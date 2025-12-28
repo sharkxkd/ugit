@@ -15,11 +15,11 @@ import (
 	"ugit/common"
 )
 
-type TreeComparison struct {
-	path string
-	fOid string
-	tOid string
-}
+// type TreeComparison struct {
+// 	path string
+// 	fOid string
+// 	tOid string
+// }
 
 type ChangedFileType struct {
 	path   string
@@ -35,9 +35,9 @@ type ChangedFileType struct {
 ********************************************************************************/
 func diffTrees(fromTree map[string]string, toTree map[string]string) string {
 	output := ""
-	for treeComparsion := range compareTrees(fromTree, toTree) {
-		if treeComparsion.fOid != treeComparsion.tOid {
-			output += diffBlobs(treeComparsion.fOid, treeComparsion.tOid, treeComparsion.path)
+	for res := range compareTrees(fromTree, toTree) {
+		if res[1] != res[2] {
+			output += diffBlobs(res[1], res[2], res[0])
 		}
 	}
 	return output
@@ -50,25 +50,31 @@ func diffTrees(fromTree map[string]string, toTree map[string]string) string {
   @Params           :
   @Return           :
 ********************************************************************************/
-func compareTrees(fromTree map[string]string, toTree map[string]string) <-chan TreeComparison {
-	ch := make(chan TreeComparison)
+func compareTrees(trees ...map[string]string) <-chan []string {
+	ch := make(chan []string)
+	len := len(trees)
 	go func() {
-
-		// 比较异同
-		for fPath, fOid := range fromTree {
-			if toTree[fPath] == "" {
-				ch <- TreeComparison{path: fPath, fOid: fOid}
-			} else {
-				ch <- TreeComparison{path: fPath, fOid: fOid, tOid: toTree[fPath]}
+		defer close(ch)
+		entries := make(map[string][]string)
+		// 遍历树
+		for i, tree := range trees {
+			for path, oid := range tree {
+				if _, ok := entries[path]; !ok {
+					entries[path] = make([]string, len)
+					for j := range entries[path] {
+						entries[path][j] = ""
+					}
+				}
+				// 填充当前树的 OID
+				entries[path][i] = oid
 			}
 		}
 
-		for tPath, tOid := range toTree {
-			if fromTree[tPath] == "" {
-				ch <- TreeComparison{path: tPath, tOid: tOid}
-			}
+		// 3. 发送结果（路径 + 各树的 OID）
+		for path, oids := range entries {
+			result := append([]string{path}, oids...)
+			ch <- result
 		}
-		close(ch)
 	}()
 	return ch
 }
@@ -138,14 +144,14 @@ func diffBlobs(fromOid string, toOid string, path string) string {
 func iterChangedFiles(fromTree map[string]string, toTree map[string]string) <-chan ChangedFileType {
 	ch := make(chan ChangedFileType)
 	go func() {
-		for comparison := range compareTrees(fromTree, toTree) {
-			if comparison.fOid != comparison.tOid {
-				if comparison.fOid == "" {
-					ch <- ChangedFileType{path: comparison.path, action: "Created"}
-				} else if comparison.tOid == "" {
-					ch <- ChangedFileType{path: comparison.path, action: "Deleted"}
+		for res := range compareTrees(fromTree, toTree) {
+			if res[1] != res[2] {
+				if res[1] == "" {
+					ch <- ChangedFileType{path: res[0], action: "Created"}
+				} else if res[2] == "" {
+					ch <- ChangedFileType{path: res[0], action: "Deleted"}
 				} else {
-					ch <- ChangedFileType{path: comparison.path, action: "Modified"}
+					ch <- ChangedFileType{path: res[0], action: "Modified"}
 				}
 			}
 		}
@@ -158,14 +164,17 @@ func iterChangedFiles(fromTree map[string]string, toTree map[string]string) <-ch
 // prettier-ignore
 /*******************************************************************************
   @Function name    : mergeTrees
-  @Description      : 合并所有的文件并返回一个路径到内容的映射
+  @Description      : 合并所有的文件并返回一个路径到内容的映射,三路合并,添加一个基础tree
   @Params           :
+	-BaseTrees		:
+	-HeadTrees		:
+	-OtherTrees		:
   @Return           :
 ********************************************************************************/
-func mergeTrees(headTrees map[string]string, otherThrees map[string]string) map[string][]byte {
+func mergeTrees(baseTrees map[string]string, headTrees map[string]string, otherThrees map[string]string) map[string][]byte {
 	tree := make(map[string][]byte)
-	for treeComparsion := range compareTrees(headTrees, otherThrees) {
-		tree[treeComparsion.path] = mergeBlobs(treeComparsion.fOid, treeComparsion.tOid)
+	for res := range compareTrees(baseTrees, headTrees, otherThrees) {
+		tree[res[0]] = mergeBlobs(res[1], res[2], res[3])
 	}
 	return tree
 }
@@ -177,8 +186,19 @@ func mergeTrees(headTrees map[string]string, otherThrees map[string]string) map[
   @Params           :
   @Return           :
 ********************************************************************************/
-func mergeBlobs(foid string, toid string) []byte {
+func mergeBlobs(boid string, foid string, toid string) []byte {
 	// 写入两个临时文件进行合并
+	bContent, err := DoRunCatFile(boid, "blob")
+	if err != nil {
+		fmt.Printf("error with cat file %s\n", boid)
+		os.Exit(1)
+	}
+	base, err := common.OenpTmp(bContent)
+	if err != nil {
+		os.Exit(1)
+	}
+	defer base.Close()
+	defer os.Remove(base.Name())
 	fContent, err := DoRunCatFile(foid, "blob")
 	if err != nil {
 		fmt.Printf("error with cat file %s\n", foid)
@@ -203,10 +223,10 @@ func mergeBlobs(foid string, toid string) []byte {
 	defer to.Close()
 	defer os.Remove(to.Name())
 	// 执行命令
-	cmd := exec.Command("diff",
-		"-DHEAD",
-		from.Name(),
-		to.Name(),
+	cmd := exec.Command("diff3", "-m",
+		"-L", "HEAD", from.Name(),
+		"-L", "BASE", base.Name(),
+		"-L", "MERGE_HEAD", to.Name(),
 	)
 	output, err := cmd.CombinedOutput()
 	// 处理 diff 的特定退出码

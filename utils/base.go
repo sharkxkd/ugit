@@ -538,17 +538,22 @@ func merge(other string) {
 		fmt.Printf("Error with merging branches %s\n", other)
 		os.Exit(1)
 	}
+	cBase, err := getCommit(getMergeBase(headOid, other))
+	if err != nil {
+		fmt.Printf("Error with merging branches %s\n", cBase)
+		os.Exit(1)
+	}
 	updateRef(MERGE_HEAD, RefValue{false, other}, true)
 	// 2. 将两个分支的内容合并并读取到工作区
-	readTreeMerged(cHead.tree, cOther.tree)
+	readTreeMerged(cBase.tree, cHead.tree, cOther.tree)
 	fmt.Println("Merged in working tree\nPlease commit")
 }
 
-func readTreeMerged(tHead string, tOther string) {
+func readTreeMerged(tBase string, tHead string, tOther string) {
 	// 1. 清除当前工作区的所有内容
 	emptyCurrentDirectory(".")
 	// 2. 获取当前两个分支对应的所有子文件夹的映射情况并且进行合并
-	for path, content := range mergeTrees(getTree(tHead, "."), getTree(tOther, ".")) {
+	for path, content := range mergeTrees(getTree(tBase, "."), getTree(tHead, "."), getTree(tOther, ".")) {
 		if _, err := common.PathExists(filepath.Dir(path)); err != nil {
 			fmt.Printf("Error with creating dir on %s\n", path)
 			os.Exit(1)
