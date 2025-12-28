@@ -29,6 +29,15 @@ func fetch(remotePath string) {
 	}
 }
 
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : getRemoteRefs
+  @Description      :
+  @Params           :
+	-remotePath		:
+	-prefix			: 默认值为""
+  @Return           :
+********************************************************************************/
 func getRemoteRefs(remotePath string, prefix string) map[string]string {
 	res := make(map[string]string)
 	ChangeGitDir(remotePath, func() {
@@ -40,13 +49,30 @@ func getRemoteRefs(remotePath string, prefix string) map[string]string {
 }
 
 func push(remotePath string, refname string) {
+	remoteRefs := getRemoteRefs(remotePath, "")
 	localRef := getRef(refname, true).value
 	if localRef == "" {
 		fmt.Printf("error without refname of %s\n", refname)
 		return
 	}
-	objectsToPush := iterObjectsAndCommits(localRef)
-	for oid := range objectsToPush {
+	// feat：新增过滤一些存在的文件
+	var knownRemoteRefs []string
+	for _, value := range remoteRefs {
+		if objectsExsits(value) {
+			knownRemoteRefs = append(knownRemoteRefs, value)
+		}
+	}
+	remoteObjects := make(map[string]bool)
+	for ref := range iterObjectsAndCommits(knownRemoteRefs...) {
+		remoteObjects[ref] = true
+	}
+	var objectsToPush []string
+	for localObject := range iterObjectsAndCommits(localRef) {
+		if !remoteObjects[localObject] {
+			objectsToPush = append(objectsToPush, localObject)
+		}
+	}
+	for _, oid := range objectsToPush {
 		pushObject(oid, remotePath)
 	}
 	ChangeGitDir(remotePath, func() {
