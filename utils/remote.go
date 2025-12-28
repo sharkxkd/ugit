@@ -9,12 +9,11 @@
 package utils
 
 import (
+	"fmt"
 	"maps"
 	"path/filepath"
 	"slices"
 )
-
-// "fmt"
 
 const REMOTE_REF_BASE = "refs/heads/"
 const LOCAL_REF_BASE = "refs/remote/"
@@ -38,4 +37,19 @@ func getRemoteRefs(remotePath string, prefix string) map[string]string {
 		}
 	})
 	return res
+}
+
+func push(remotePath string, refname string) {
+	localRef := getRef(refname, true).value
+	if localRef == "" {
+		fmt.Printf("error without refname of %s\n", refname)
+		return
+	}
+	objectsToPush := iterObjectsAndCommits(localRef)
+	for oid := range objectsToPush {
+		pushObject(oid, remotePath)
+	}
+	ChangeGitDir(remotePath, func() {
+		updateRef(refname, RefValue{false, localRef}, true)
+	})
 }

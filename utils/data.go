@@ -263,3 +263,8 @@ func fetchObjectIfMissing(oid string, remotePath string) {
 	remotePath = filepath.Join(remotePath, ".ugit", OBJECTS, oid)
 	common.CopyFile(remotePath, filepath.Join(GIT_DIR, OBJECTS, oid))
 }
+
+func pushObject(oid string, remotePath string) {
+	remotePath = filepath.Join(remotePath, ".ugit", OBJECTS, oid)
+	common.CopyFile(filepath.Join(GIT_DIR, OBJECTS, oid), remotePath)
+}

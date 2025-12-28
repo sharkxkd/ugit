@@ -14,6 +14,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 )
 
@@ -80,6 +81,8 @@ func ParseArgs() {
 	mergeBaseCmd := flag.NewFlagSet("merge-base", flag.ExitOnError)
 
 	fetchCmd := flag.NewFlagSet("fetch", flag.ExitOnError)
+
+	pushCmd := flag.NewFlagSet("push", flag.ExitOnError)
 	switch os.Args[1] {
 	case "init":
 		initCmd.Parse(os.Args[2:])
@@ -152,6 +155,10 @@ func ParseArgs() {
 		fetchCmd.Parse(os.Args[2:])
 		remainingArgs := fetchCmd.Args()
 		runFetch(remainingArgs)
+	case "push":
+		pushCmd.Parse(os.Args[2:])
+		remainingArgs := pushCmd.Args()
+		runPush(remainingArgs)
 	default:
 		os.Exit(1)
 	}
@@ -549,4 +556,11 @@ func runFetch(args []string) {
 		fmt.Println("dismissing argument of remote name")
 	}
 	fetch(args[0])
+}
+
+func runPush(args []string) {
+	if len(args) < 2 {
+		fmt.Println("dismissing argument of remote name and branch")
+	}
+	push(args[0], filepath.Join("refs","heads",args[1]))
 }
