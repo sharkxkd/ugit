@@ -159,6 +159,7 @@ func iterRefs(prefix string, deref bool) <-chan refMap {
 
 		// 先处理 HEAD
 		ch <- refMap{refname: HEAD, ref: getRef(HEAD, false)}
+		ch <- refMap{refname: MERGE_HEAD, ref: getRef(MERGE_HEAD, false)}
 
 		// 遍历 refs 下的所有引用文件
 		_ = filepath.WalkDir(REFS, func(path string, d fs.DirEntry, err error) error {
@@ -173,7 +174,10 @@ func iterRefs(prefix string, deref bool) <-chan refMap {
 				rel = path
 			}
 			if strings.HasPrefix(rel, prefix) {
-				ch <- refMap{refname: rel, ref: getRef(rel, deref)}
+				ref := getRef(rel, deref)
+				if ref.value != "" {
+					ch <- refMap{refname: rel, ref: ref}
+				}
 			}
 			return nil
 		})

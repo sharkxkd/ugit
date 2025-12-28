@@ -349,7 +349,7 @@ func runK(args []string) {
 			os.Exit(1)
 		}
 		dot += fmt.Sprintf("\"%s\" [shape=box style=filled label=\"%s\"]", oid, oid[:10])
-		for parent := range commit.parents {
+		for _, parent := range commit.parents {
 			dot += fmt.Sprintf("\"%s\" -> \"%s\"", oid, parent)
 		}
 	}
