@@ -21,11 +21,13 @@ import (
 	"ugit/common"
 )
 
-const GIT_DIR = ".ugit"
+// const GIT_DIR = ".ugit"
 const OBJECTS = "objects"
 const HEAD = "HEAD"
 const REFS = ".ugit/refs"
 const MERGE_HEAD = "MERGE_HEAD"
+
+var GIT_DIR string = ""
 
 type refMap struct {
 	refname string
@@ -232,4 +234,15 @@ func deleteRefs(ref string, deref bool) {
 	if err := os.Remove(filepath.Join(GIT_DIR, ref)); err != nil {
 		fmt.Println(err)
 	}
+}
+
+func ChangeGitDir(newDir string, f func()) {
+	oldDir := GIT_DIR
+	GIT_DIR = fmt.Sprintf("%s/.ugit", newDir)
+	f() // 执行回调方法
+
+	// 确保即使 f() 发生 panic，也能恢复状态
+	defer func() {
+		GIT_DIR = oldDir
+	}()
 }

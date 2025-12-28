@@ -5,5 +5,5 @@ import (
 )
 
 func main() {
-	utils.ParseArgs()
+	utils.ChangeGitDir(".", utils.ParseArgs)
 }
