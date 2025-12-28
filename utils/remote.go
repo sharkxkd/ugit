@@ -8,20 +8,25 @@
 ********************************************************************************/
 package utils
 
-import "fmt"
+import "path/filepath"
+
+// "fmt"
+
+const REMOTE_REF_BASE = "refs/heads/"
+const LOCAL_REF_BASE = "refs/remote/"
 
 func fetch(remotePath string) {
-	fmt.Println("Will fetch the following refs:")
-	for refname := range getRemoteRefs(remotePath, "refs/heads") {
-		fmt.Printf("- %s\n", refname)
+	for remoteName, value := range getRemoteRefs(remotePath, REMOTE_REF_BASE) {
+		refname := filepath.Base(remoteName)
+		updateRef(filepath.Join(LOCAL_REF_BASE, refname), RefValue{false, value}, true)
 	}
 }
 
-func getRemoteRefs(remotePath string, prefix string) []string {
-	var res []string
+func getRemoteRefs(remotePath string, prefix string) map[string]string {
+	res := make(map[string]string)
 	ChangeGitDir(remotePath, func() {
 		for ref := range iterRefs(prefix, true) {
-			res = append(res, ref.refname)
+			res[ref.refname] = ref.ref.value
 		}
 	})
 	return res
