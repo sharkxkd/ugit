@@ -78,6 +78,8 @@ func ParseArgs() {
 	mergeCmd.StringVar(&branchName, "commit", "master", "分支名")
 
 	mergeBaseCmd := flag.NewFlagSet("merge-base", flag.ExitOnError)
+
+	fetchCmd := flag.NewFlagSet("fetch", flag.ExitOnError)
 	switch os.Args[1] {
 	case "init":
 		initCmd.Parse(os.Args[2:])
@@ -146,6 +148,10 @@ func ParseArgs() {
 		mergeBaseCmd.Parse(os.Args[2:])
 		remainingArgs := mergeBaseCmd.Args()
 		runMergeBase(remainingArgs)
+	case "fetch":
+		fetchCmd.Parse(os.Args[2:])
+		remainingArgs := fetchCmd.Args()
+		runFetch(remainingArgs)
 	default:
 		os.Exit(1)
 	}
@@ -529,4 +535,18 @@ func runMergeBase(args []string) {
 		os.Exit(1)
 	}
 	fmt.Println(getMergeBase(args[0], args[1]))
+}
+
+// prettier-ignore
+/*******************************************************************************
+  @Function name    : fetch
+  @Description      :
+  @Params           :
+  @Return           :
+********************************************************************************/
+func runFetch(args []string) {
+	if len(args) < 1 {
+		fmt.Println("dismissing argument of remote name")
+	}
+	fetch(args[0])
 }
