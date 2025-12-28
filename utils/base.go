@@ -593,3 +593,41 @@ func getMergeBase(oid1 string, oid2 string) string {
 	fmt.Printf("Cann't find a common parent with %s and %s\n", oid1, oid2)
 	return ""
 }
+
+func iterObjectsAndCommits(oids ...string) <-chan string {
+
+	ch := make(chan string)
+	go func() {
+		defer close(ch)
+		visited := make(map[string]bool)
+
+		var iterObjectsInTree func(oid string)
+		iterObjectsInTree = func(oid string) {
+			visited[oid] = true
+			ch <- oid
+			for entry := range iterTreeEntries(oid) {
+				if !visited[entry.oid] {
+					if entry.fType == "tree" {
+						iterObjectsInTree(entry.oid)
+					} else {
+						visited[entry.oid] = true
+						ch <- entry.oid
+					}
+				}
+			}
+		}
+
+		for oid := range iterCommitsAndParents(oids) {
+			ch <- oid
+			commit, err := getCommit(oid)
+			if err != nil {
+				fmt.Printf("【iterObjectsAndCommits】error with getCommit of %s\n", oid)
+				os.Exit(1)
+			}
+			if !visited[commit.tree] {
+				iterObjectsInTree(commit.tree)
+			}
+		}
+	}()
+	return ch
+}

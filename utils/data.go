@@ -246,3 +246,20 @@ func ChangeGitDir(newDir string, f func()) {
 		GIT_DIR = oldDir
 	}()
 }
+
+func objectsExsits(oid string) bool {
+	info, err := os.Stat(filepath.Join(GIT_DIR, OBJECTS, oid))
+	if err != nil {
+		fmt.Println("File state error")
+		return false
+	}
+	return !info.IsDir()
+}
+
+func fetchObjectIfMissing(oid string, remotePath string) {
+	if objectsExsits(oid) {
+		return
+	}
+	remotePath = filepath.Join(remotePath, ".ugit", OBJECTS, oid)
+	common.CopyFile(remotePath, filepath.Join(GIT_DIR, OBJECTS, oid))
+}

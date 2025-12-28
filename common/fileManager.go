@@ -83,3 +83,20 @@ func OenpTmp(content []byte) (*os.File, error) {
 	
 	return f, nil
 }
+
+func CopyFile(src, dst string) error {
+	// 1. 读取源文件数据
+	data, err := os.ReadFile(src)
+	if err != nil {
+		return err
+	}
+
+	// 2. 获取源文件权限（如 0755 可执行权限）
+	info, err := os.Stat(src)
+	if err != nil {
+		return err
+	}
+
+	// 3. 写入目标文件，并应用相同的权限
+	return os.WriteFile(dst, data, info.Mode())
+}
