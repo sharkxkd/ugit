@@ -238,7 +238,7 @@ func deleteRefs(ref string, deref bool) {
 
 func ChangeGitDir(newDir string, f func()) {
 	oldDir := GIT_DIR
-	GIT_DIR = fmt.Sprintf("%s/.ugit", newDir)
+	GIT_DIR = filepath.Join(newDir, ".ugit")
 	f() // 执行回调方法
 
 	// 确保即使 f() 发生 panic，也能恢复状态
