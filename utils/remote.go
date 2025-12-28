@@ -50,9 +50,15 @@ func getRemoteRefs(remotePath string, prefix string) map[string]string {
 
 func push(remotePath string, refname string) {
 	remoteRefs := getRemoteRefs(remotePath, "")
+	remoteRef := remoteRefs[refname]
 	localRef := getRef(refname, true).value
 	if localRef == "" {
 		fmt.Printf("error without refname of %s\n", refname)
+		return
+	}
+	// Don't allow force push
+	if remoteRef != "" || isAncestorOf(localRef, remoteRef) {
+		fmt.Println("Don't allow force push")
 		return
 	}
 	// feat：新增过滤一些存在的文件

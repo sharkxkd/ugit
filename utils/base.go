@@ -631,3 +631,12 @@ func iterObjectsAndCommits(oids ...string) <-chan string {
 	}()
 	return ch
 }
+
+func isAncestorOf(commit string, maybeAncestor string) bool {
+	for oid := range iterCommitsAndParents([]string{commit}) {
+		if maybeAncestor == oid {
+			return true
+		}
+	}
+	return false
+}
