@@ -528,17 +528,24 @@ func getWorkingTree() map[string]string {
 func merge(other string) {
 	// 1. 获取当前分支头节点对应的oid
 	headOid := getRef(HEAD, true).value
-	cHead, err := getCommit(headOid)
-	if err != nil {
-		fmt.Printf("Error with merging branches %s\n", other)
-		os.Exit(1)
-	}
+	mergeBase := getMergeBase(headOid, other)
 	cOther, err := getCommit(other)
 	if err != nil {
 		fmt.Printf("Error with merging branches %s\n", other)
 		os.Exit(1)
 	}
-	cBase, err := getCommit(getMergeBase(headOid, other))
+	if mergeBase == headOid {
+		readTree(cOther.tree)
+		updateRef(HEAD, RefValue{false, other}, true)
+		fmt.Println("Fast-forward merge, no need to commit")
+		return
+	}
+	cHead, err := getCommit(headOid)
+	if err != nil {
+		fmt.Printf("Error with merging branches %s\n", other)
+		os.Exit(1)
+	}
+	cBase, err := getCommit(mergeBase)
 	if err != nil {
 		fmt.Printf("Error with merging branches %s\n", cBase)
 		os.Exit(1)
